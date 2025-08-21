@@ -33,11 +33,11 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker-compose build mysql api
+        docker compose build mysql api
 
     - name: Start services
       run: |
-        docker-compose up -d mysql api
+        docker compose up -d mysql api
 
     - name: Wait for services to be ready
       run: |
@@ -55,7 +55,7 @@ jobs:
 
           if [ $attempt -eq $max_attempts ]; then
             echo "API failed to start within timeout"
-            docker-compose logs api
+            docker compose logs api
             exit 1
           fi
 
@@ -85,14 +85,14 @@ jobs:
     - name: Cleanup
       if: always()
       run: |
-        docker-compose down -v
+        docker compose down -v
 
     - name: Save execution time
       run: |
         echo "raw_commands,${{ env.RAW_COMMANDS_TIME }}" > raw_commands_time.csv
 
     - name: Upload execution time artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: raw-commands-time
         path: raw_commands_time.csv
@@ -126,11 +126,11 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker-compose build mysql api
+        docker compose build mysql api
 
     - name: Start services
       run: |
-        docker-compose up -d mysql api
+        docker compose up -d mysql api
 
     - name: Wait for services to be ready
       run: |
@@ -148,7 +148,7 @@ jobs:
 
           if [ $attempt -eq $max_attempts ]; then
             echo "API failed to start within timeout"
-            docker-compose logs api
+            docker compose logs api
             exit 1
           fi
 
@@ -170,7 +170,7 @@ jobs:
     - name: Cleanup
       if: always()
       run: |
-        docker-compose down -v
+        docker compose down -v
 
     - name: Save execution time
       run: |
@@ -215,11 +215,11 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker-compose build mysql api
+        docker compose build mysql api
 
     - name: Start services
       run: |
-        docker-compose up -d mysql api
+        docker compose up -d mysql api
 
     - name: Wait for services to be ready
       run: |
@@ -234,7 +234,7 @@ jobs:
 
           if [ $attempt -eq $max_attempts ]; then
             echo "API failed to start within timeout"
-            docker-compose logs api
+            docker compose logs api
             exit 1
           fi
 
@@ -256,7 +256,7 @@ jobs:
     - name: Cleanup
       if: always()
       run: |
-        docker-compose down -v
+        docker compose down -v
 
     - name: Save execution time
       run: |
