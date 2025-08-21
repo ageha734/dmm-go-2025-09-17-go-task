@@ -44,7 +44,6 @@ jobs:
         echo "Waiting for services to be ready..."
         sleep 30
 
-        # Check if API is responding
         max_attempts=30
         attempt=1
 
@@ -67,15 +66,12 @@ jobs:
 
     - name: Run E2E tests with Raw Commands
       run: |
-        # Install Hurl
         curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl_4.3.0_amd64.deb
         sudo dpkg -i hurl_4.3.0_amd64.deb
 
-        # Run health check tests
         echo "Running health check tests..."
         hurl --test e2e/home/index.hurl --variable host=localhost:8080
 
-        # Run user API tests
         echo "Running user API tests..."
         hurl --test e2e/user/index.hurl --variable host=localhost:8080
 
@@ -141,7 +137,6 @@ jobs:
         echo "Waiting for services to be ready..."
         sleep 30
 
-        # Check if API is responding
         max_attempts=30
         attempt=1
 
@@ -227,8 +222,7 @@ jobs:
         docker-compose up -d mysql api
 
     - name: Wait for services to be ready
-
-        # Check if API is responding
+      run: |
         max_attempts=30
         attempt=1
 
@@ -309,7 +303,6 @@ jobs:
         echo "=== E2E Test Execution Time Comparison ==="
         cat comparison_results.csv
 
-        # Create a summary
         echo "## E2E Test Performance Comparison Results" > comparison_summary.md
         echo "" >> comparison_summary.md
         echo "| Method | Execution Time (seconds) |" >> comparison_summary.md
