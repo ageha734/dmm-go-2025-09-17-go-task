@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/database"
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/models"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/database"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/models"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )

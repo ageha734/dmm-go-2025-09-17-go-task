@@ -55,7 +55,7 @@ Go言語とGin Webフレームワークを使用したユーザー管理APIで�
 #### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/dmm-com/dmm-go-2025-09-17-go-task.git
+git clone https://github.com/ageha734/dmm-go-2025-09-17-go-task.git
 cd dmm-go-2025-09-17-go-task
 ```
 

@@ -23,13 +23,13 @@ help:
 # Setup Tasks
 # --------------------------------------------------------------------------
 .PHONY: .setup-mysql .setup-hurl .setup-shlack
-setup: .setup-mysql .setup-hurl .setup-shlack
+setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-client, hurl, shlack）を自動インストール
 	@echo "👍 全てのツールのセットアップが完了しました。"
 
 .setup-mysql:
 	@if ! command -v mysql >/dev/null 2>&1; then \
 		echo "🔧 mysql-clientをインストールします..."; \
-		echo "TODO: バイナリをダウンロードして、PATHに追加する"; \
+		$(MAKE) .install-mysql; \
 	else \
 		echo "🔧 mysql-clientは既にインストールされています。"; \
 	fi
@@ -37,15 +37,113 @@ setup: .setup-mysql .setup-hurl .setup-shlack
 .setup-hurl:
 	@if ! command -v hurl >/dev/null 2>&1; then \
 		echo "🔧 hurlをインストールします..."; \
-		curl --location https://hurl.dev/install.sh | bash; \
+		$(MAKE) .install-hurl; \
 	else \
 		echo "🔧 hurlは既にインストールされています。"; \
 	fi
 
+.detect-os:
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		echo "macos"; \
+	elif [ "$$(uname)" = "Linux" ]; then \
+		echo "linux"; \
+	elif [ -n "$$WINDIR" ] || [ "$$(uname -o 2>/dev/null)" = "Msys" ] || [ "$$(uname -o 2>/dev/null)" = "Cygwin" ]; then \
+		echo "windows"; \
+	else \
+		echo "unknown"; \
+	fi
+
+.install-mysql:
+	@OS=$$($(MAKE) -s .detect-os); \
+	echo "🔧 OS: $$OS でmysql-clientをインストールします..."; \
+	case $$OS in \
+		"macos") \
+			if ! command -v brew >/dev/null 2>&1; then \
+				echo "❌ Homebrewがインストールされていません。https://brew.sh/ からインストールしてください。"; \
+				exit 1; \
+			fi; \
+			brew install mysql-client; \
+			;; \
+		"linux") \
+			if command -v apt >/dev/null 2>&1; then \
+				sudo apt update && sudo apt install -y mysql-client; \
+			elif command -v yum >/dev/null 2>&1; then \
+				sudo yum install -y mysql; \
+			elif command -v dnf >/dev/null 2>&1; then \
+				sudo dnf install -y mysql; \
+			elif command -v pacman >/dev/null 2>&1; then \
+				sudo pacman -S --noconfirm mysql; \
+			elif command -v zypper >/dev/null 2>&1; then \
+				sudo zypper install -y mysql-client; \
+			else \
+				echo "❌ サポートされているパッケージマネージャーが見つかりません。"; \
+				exit 1; \
+			fi; \
+			;; \
+		"windows") \
+			if command -v winget >/dev/null 2>&1; then \
+				winget install Oracle.MySQL; \
+			else \
+				echo "❌ wingetがインストールされていません。Windows Package Managerをインストールしてください。"; \
+				exit 1; \
+			fi; \
+			;; \
+		*) \
+			echo "❌ サポートされていないOS: $$OS"; \
+			exit 1; \
+			;; \
+	esac; \
+	echo "✅ mysql-clientのインストールが完了しました。"
+
+.install-hurl:
+	@OS=$$($(MAKE) -s .detect-os); \
+	echo "🔧 OS: $$OS でhurlをインストールします..."; \
+	case $$OS in \
+		"macos") \
+			if ! command -v brew >/dev/null 2>&1; then \
+				echo "❌ Homebrewがインストールされていません。https://brew.sh/ からインストールしてください。"; \
+				exit 1; \
+			fi; \
+			brew install hurl; \
+			;; \
+		"linux") \
+			if command -v apt >/dev/null 2>&1; then \
+				sudo apt update && sudo apt install -y hurl; \
+			elif command -v yum >/dev/null 2>&1; then \
+				sudo yum install -y hurl; \
+			elif command -v dnf >/dev/null 2>&1; then \
+				sudo dnf install -y hurl; \
+			elif command -v pacman >/dev/null 2>&1; then \
+				sudo pacman -S --noconfirm hurl; \
+			elif command -v zypper >/dev/null 2>&1; then \
+				sudo zypper install -y hurl; \
+			else \
+				echo "⚠️  パッケージマネージャーでhurlが見つからない場合、公式サイトからバイナリをダウンロードします..."; \
+				curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4)-x86_64-unknown-linux-gnu.tar.gz; \
+				tar -xzf hurl-*.tar.gz; \
+				sudo mv hurl-*/bin/hurl /usr/local/bin/; \
+				rm -rf hurl-*; \
+			fi; \
+			;; \
+		"windows") \
+			if command -v winget >/dev/null 2>&1; then \
+				winget install hurl; \
+			else \
+				echo "❌ wingetがインストールされていません。Windows Package Managerをインストールしてください。"; \
+				exit 1; \
+			fi; \
+			;; \
+		*) \
+			echo "❌ サポートされていないOS: $$OS"; \
+			exit 1; \
+			;; \
+	esac; \
+	echo "✅ hurlのインストールが完了しました。"
+
 .setup-shlack:
 	@if ! command -v shlack >/dev/null 2>&1; then \
 		echo "🔧 shlackをインストールします..."; \
-		curl --location https://raw.githubusercontent.com/dmm-com/shlack/install.sh | bash; \
+		curl --location https://raw.githubusercontent.com/ageha734/shlack/install.sh | bash; \
 	else \
 		echo "🔧 shlackは既にインストールされています。"; \
 	fi
@@ -53,18 +151,18 @@ setup: .setup-mysql .setup-hurl .setup-shlack
 # --------------------------------------------------------------------------
 # Development Tasks
 # --------------------------------------------------------------------------
-mod:
+mod: ## Goモジュールの依存関係を整理・ダウンロード
 	@echo "📦 Goモジュールの依存関係を整理・ダウンロードします..."
 	@go mod tidy
 	@go mod download
 
-build: mod $(TARGET_APP)
+build: mod $(TARGET_APP) ## アプリケーションをビルド
 
 $(TARGET_APP): $(GO_FILES) go.mod go.sum
 	@echo "🔨 アプリケーションをビルドします..."
 	@go build -o $(TARGET_APP) ./cmd/main.go
 
-dev:
+dev: ## 開発モードでアプリケーションを起動
 	@echo "⚡️ 開発モードでアプリケーションを起動します..."
 	@# Makefileにはファイルの変更を監視する機能はありません。
 	@# reflexやairなどのツールを使用してください:
@@ -74,17 +172,17 @@ dev:
 # --------------------------------------------------------------------------
 # Test & Lint Tasks
 # --------------------------------------------------------------------------
-check: lint test-unit build
+check: lint test-unit build ## リント、ユニットテスト、ビルドを実行
 
-lint:
+lint: ## golangci-lintを実行
 	@echo "🔍 golangci-lintを実行します..."
 	@go tool golangci-lint run ./...
 
-test-unit:
+test-unit: ## ユニットテストを実行
 	@echo "🔬 ユニットテストを実行します..."
 	@go test ./... -overlay=$(shell go run github.com/tenntenn/testtime/cmd/testtime@latest)
 
-test-e2e:
+test-e2e: ## E2Eテストを実行
 	@sh -c ' \
 		trap "shlack luke \"$$([ $$? -eq 0 ] && echo Success! || echo Failed with exit code $$?)\"" EXIT; \
 		echo "🚀 E2Eテストを実行します..."; \

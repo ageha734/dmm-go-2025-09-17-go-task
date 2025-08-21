@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/database"
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/routes"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/database"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/routes"
 )
 
 func main() {

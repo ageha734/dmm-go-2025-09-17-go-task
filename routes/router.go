@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/handlers"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/handlers"
 	"github.com/gin-gonic/gin"
 )
 

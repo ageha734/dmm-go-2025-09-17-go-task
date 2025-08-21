@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/handlers"
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/models"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/handlers"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/models"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"

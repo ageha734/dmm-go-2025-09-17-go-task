@@ -1,4 +1,4 @@
-module github.com/dmm-com/dmm-go-2025-09-17-go-task
+module github.com/ageha734/dmm-go-2025-09-17-go-task
 
 go 1.24.0
 

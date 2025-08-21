@@ -3,7 +3,7 @@ package models_test
 import (
 	"testing"
 
-	"github.com/dmm-com/dmm-go-2025-09-17-go-task/models"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/models"
 	"github.com/stretchr/testify/assert"
 )
 
