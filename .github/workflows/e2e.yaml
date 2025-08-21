@@ -177,7 +177,7 @@ jobs:
         echo "make,${{ env.MAKE_TIME }}" > make_time.csv
 
     - name: Upload execution time artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: make-time
         path: make_time.csv
@@ -263,7 +263,7 @@ jobs:
         echo "task,${{ env.TASK_TIME }}" > task_time.csv
 
     - name: Upload execution time artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: task-time
         path: task_time.csv
@@ -276,7 +276,7 @@ jobs:
 
     steps:
     - name: Download all execution time artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Combine results and create comparison
       run: |
