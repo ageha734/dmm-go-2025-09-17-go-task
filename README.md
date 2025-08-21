@@ -21,7 +21,7 @@ Go言語とGin Webフレームワークを使用したユーザー管理APIで�
 
 ## プロジェクト構成
 
-```
+```bash
 .
 ├── cmd/
 │   └── main.go              # アプリケーションエントリーポイント
@@ -52,18 +52,21 @@ Go言語とGin Webフレームワークを使用したユーザー管理APIで�
 
 ### インストール
 
-1. リポジトリをクローン
+#### 1. リポジトリをクローン
+
 ```bash
 git clone https://github.com/dmm-com/dmm-go-2025-09-17-go-task.git
 cd dmm-go-2025-09-17-go-task
 ```
 
-2. 依存関係をインストール
+#### 2. 依存関係をインストール
+
 ```bash
 go mod download
 ```
 
-3. 環境変数を設定
+#### 3. 環境変数を設定
+
 ```bash
 cp .env.example .env
 # .envファイルを編集してデータベース設定を行う

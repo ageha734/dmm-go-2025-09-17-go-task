@@ -1,0 +1,94 @@
+name: CI Performance Comparison
+
+on:
+  workflow_dispatch:
+
+jobs:
+  raw-command:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: go mod tidy"
+          echo "========================================="
+          time go mod tidy
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: go mod download"
+          echo "========================================="
+          time go mod download
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: golangci-lint run"
+          echo "========================================="
+          time go tool golangci-lint run ./...
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: go test"
+          echo "========================================="
+          time go test ./... -overlay=$(go run github.com/tenntenn/testtime/cmd/testtime@latest)
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: go build"
+          echo "========================================="
+          time go build -o ./.target/app ./cmd/main.go
+
+  makefile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run Makefile task with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Makefile: make check"
+          echo "========================================="
+          time make check
+
+  taskfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Taskfile task with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Taskfile: task check"
+          echo "========================================="
+          time task check
