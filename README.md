@@ -69,7 +69,36 @@ go mod download
 
 ```bash
 cp .env.example .env
-# .envファイルを編集してデータベース設定を行う
+```
+
+`.env`ファイルを編集して、以下の環境変数を設定してください：
+
+```bash
+# Slack通知設定（オプション）
+SLACK_TOKEN=xoxb-your-slack-bot-token
+
+# データベース設定
+DATABASE_HOST=127.0.0.1
+DATABASE_PORT=3306
+DATABASE_USER=root
+DATABASE_PASSWORD=password
+DATABASE_NAME=testdb
+```
+
+**重要**:
+- `DATABASE_HOST`は`localhost`ではなく`127.0.0.1`を使用してください（MySQL接続の問題を回避するため）
+- 引用符は使用しないでください（例: `DATABASE_HOST=127.0.0.1` ✅、`DATABASE_HOST="127.0.0.1"` ❌）
+
+#### 4. 必要なツールのセットアップ
+
+開発に必要なツール（mysql-client、hurl、shlack）を自動でインストールします：
+
+```bash
+# Taskを使用する場合
+task setup
+
+# Makeを使用する場合
+make setup
 ```
 
 ## 実行方法
@@ -152,6 +181,55 @@ task e2e
 go test -cover ./...
 ```
 
+## GitHub Actions との連携
+
+### Environment Secrets の同期
+
+ローカルの`.env`ファイルからGitHub ActionsのEnvironment Secretsに環境変数を自動で同期できます。
+
+#### 前提条件
+
+1. **GitHub CLI のインストール**
+   ```bash
+   # macOS
+   brew install gh
+
+   # Ubuntu/Debian
+   sudo apt install gh
+   ```
+
+2. **GitHub CLI の認証**
+   ```bash
+   gh auth login
+   ```
+
+3. **リポジトリへのadmin権限**（Environment Secretsの設定に必要）
+
+#### 使用方法
+
+```bash
+# ヘルプを表示
+./scripts/sync_env_to_github_secrets.sh --help
+
+# dry-runモードで実行（実際には変更せず、実行予定の内容を表示）
+./scripts/sync_env_to_github_secrets.sh --dry-run
+
+# 基本的な使用方法（リポジトリは自動検出、デフォルトEnvironment: production）
+./scripts/sync_env_to_github_secrets.sh
+
+# 特定のEnvironmentを指定
+./scripts/sync_env_to_github_secrets.sh -e staging
+
+# 特定の環境変数ファイルを指定
+./scripts/sync_env_to_github_secrets.sh -f .env.production -e production
+```
+
+#### 注意事項
+
+- **セキュリティ**: 機密情報を含む環境変数を扱うため、実行前に`--dry-run`で内容を確認してください
+- **上書き**: 既存のSecretは警告なしに上書きされます
+- **権限**: Environment Secretsの設定にはリポジトリへのadmin権限が必要です
+
 ## 開発
 
 ### コードフォーマット
@@ -170,6 +248,19 @@ task lint
 
 ```bash
 task --list
+```
+
+### E2Eテスト速度比較
+
+MakeとTaskのE2Eテスト実行時間を比較できます：
+
+```bash
+# 全サービスのテストを実行
+./scripts/e2e_speed_check.sh
+
+# 特定のサービスのみテスト
+./scripts/e2e_speed_check.sh home
+./scripts/e2e_speed_check.sh user
 ```
 
 ## ライセンス

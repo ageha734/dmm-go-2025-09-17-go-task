@@ -1,7 +1,7 @@
 # User API E2E Tests with Irregular Cases and 1000+ Users
 
 # Test 1: Get all users (should handle large dataset of 1000+ users)
-GET http://api:8080/api/v1/users
+GET http://localhost:8080/api/v1/users
 
 HTTP 200
 [Asserts]
@@ -14,7 +14,7 @@ jsonpath "$.data[0].age" exists
 duration < 5000
 
 # Test 2: Get specific user (first user)
-GET http://api:8080/api/v1/users/1
+GET http://localhost:8080/api/v1/users/1
 
 HTTP 200
 [Asserts]
@@ -24,7 +24,7 @@ jsonpath "$.data.email" == "tanaka@example.com"
 jsonpath "$.data.age" == 25
 
 # Test 3: Get user with irregular data (empty name)
-GET http://api:8080/api/v1/users/1001
+GET http://localhost:8080/api/v1/users/1001
 
 HTTP 200
 [Asserts]
@@ -34,7 +34,7 @@ jsonpath "$.data.email" == "empty_name@example.com"
 jsonpath "$.data.age" == 25
 
 # Test 4: Get user with NULL age
-GET http://api:8080/api/v1/users/1003
+GET http://localhost:8080/api/v1/users/1003
 
 HTTP 200
 [Asserts]
@@ -44,7 +44,7 @@ jsonpath "$.data.email" == "no_age@example.com"
 # Age might be null or 0, both should be handled gracefully
 
 # Test 5: Create new user with valid data
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -64,7 +64,7 @@ jsonpath "$.data.id" exists
 created_user_id: jsonpath "$.data.id"
 
 # Test 6: Try to create user with duplicate email (irregular case)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -78,7 +78,7 @@ HTTP 409
 jsonpath "$.error" == "Email already exists"
 
 # Test 7: Try to create user with empty name (should fail)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -92,7 +92,7 @@ HTTP 400
 jsonpath "$.error" == "Name cannot be empty"
 
 # Test 8: Create user with edge case age (0)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -110,7 +110,7 @@ jsonpath "$.data.age" == 0
 newborn_user_id: jsonpath "$.data.id"
 
 # Test 9: Create user with edge case age (150)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -128,7 +128,7 @@ jsonpath "$.data.age" == 150
 elderly_user_id: jsonpath "$.data.id"
 
 # Test 10: Update user with valid data
-PUT http://api:8080/api/v1/users/{{created_user_id}}
+PUT http://localhost:8080/api/v1/users/{{created_user_id}}
 Content-Type: application/json
 
 {
@@ -143,7 +143,7 @@ jsonpath "$.data.email" == "yamada@example.com"
 jsonpath "$.data.age" == 29
 
 # Test 11: Try to update non-existent user (irregular case)
-PUT http://api:8080/api/v1/users/99999
+PUT http://localhost:8080/api/v1/users/99999
 Content-Type: application/json
 
 {
@@ -156,7 +156,7 @@ HTTP 404
 jsonpath "$.error" == "User not found"
 
 # Test 12: Get user statistics (should handle large dataset)
-GET http://api:8080/api/v1/stats
+GET http://localhost:8080/api/v1/stats
 
 HTTP 200
 [Asserts]
@@ -168,33 +168,33 @@ jsonpath "$.data.average_age" >= 0
 jsonpath "$.data.average_age" < 200
 
 # Test 13: Delete created users
-DELETE http://api:8080/api/v1/users/{{created_user_id}}
+DELETE http://localhost:8080/api/v1/users/{{created_user_id}}
 
 HTTP 200
 [Asserts]
 jsonpath "$.message" == "User deleted successfully"
 
-DELETE http://api:8080/api/v1/users/{{newborn_user_id}}
+DELETE http://localhost:8080/api/v1/users/{{newborn_user_id}}
 
 HTTP 200
 [Asserts]
 jsonpath "$.message" == "User deleted successfully"
 
-DELETE http://api:8080/api/v1/users/{{elderly_user_id}}
+DELETE http://localhost:8080/api/v1/users/{{elderly_user_id}}
 
 HTTP 200
 [Asserts]
 jsonpath "$.message" == "User deleted successfully"
 
 # Test 14: Try to get deleted user (should return 404)
-GET http://api:8080/api/v1/users/{{created_user_id}}
+GET http://localhost:8080/api/v1/users/{{created_user_id}}
 
 HTTP 404
 [Asserts]
 jsonpath "$.error" == "User not found"
 
 # Test 15: Create user with invalid data (missing required fields)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -207,7 +207,7 @@ HTTP 400
 jsonpath "$.error" exists
 
 # Test 16: Create user with extremely long name (irregular case)
-POST http://api:8080/api/v1/users
+POST http://localhost:8080/api/v1/users
 Content-Type: application/json
 
 {
@@ -225,19 +225,19 @@ jsonpath "$.data.email" == "very_long_name@test.com"
 long_name_user_id: jsonpath "$.data.id"
 
 # Clean up long name user
-DELETE http://api:8080/api/v1/users/{{long_name_user_id}}
+DELETE http://localhost:8080/api/v1/users/{{long_name_user_id}}
 
 HTTP 200
 
 # Test 17: Get non-existent user with very high ID (irregular case)
-GET http://api:8080/api/v1/users/999999
+GET http://localhost:8080/api/v1/users/999999
 
 HTTP 404
 [Asserts]
 jsonpath "$.error" == "User not found"
 
 # Test 18: Test pagination-like behavior by getting users near the end of dataset
-GET http://api:8080/api/v1/users/1000
+GET http://localhost:8080/api/v1/users/1000
 
 HTTP 200
 [Asserts]

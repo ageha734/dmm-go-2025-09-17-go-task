@@ -74,7 +74,7 @@ jobs:
         sudo mv hurl-*/bin/hurl /usr/local/bin/
         rm -rf hurl-*.tar.gz
 
-        curl --location https://raw.githubusercontent.com/ageha734/shlack/install.sh | bash
+        curl --location https://raw.githubusercontent.com/ageha734/shlack/master/install.sh | bash
 
         for dir in e2e/*; do
           if [ -d "$dir" ]; then
