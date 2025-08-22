@@ -150,7 +150,7 @@ tasks:
     status:
       - command -v shlack >/dev/null 2>&1
     cmds:
-      - curl --location https://raw.githubusercontent.com/ageha734/shlack/install.sh | bash
+      - curl --location https://raw.githubusercontent.com/ageha734/shlack/master/install.sh | bash
 
   setup:
     desc: "✅ 開発に必要なCLIツールをインストールします"

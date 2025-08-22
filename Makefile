@@ -132,7 +132,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 .setup-shlack:
 	@if ! command -v shlack >/dev/null 2>&1; then \
 		echo "🔧 shlackをインストールします..."; \
-		curl --location https://raw.githubusercontent.com/ageha734/shlack/install.sh | bash; \
+		curl --location https://raw.githubusercontent.com/ageha734/shlack/master/install.sh | bash; \
 	else \
 		echo "🔧 shlackは既にインストールされています。"; \
 	fi
