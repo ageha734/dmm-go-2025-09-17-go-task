@@ -2,20 +2,17 @@
 
 set -euo pipefail
 
-# カラー定義
 COLOR_BLUE='\033[0;34m'
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[1;33m'
 COLOR_RED='\033[0;31m'
 COLOR_NC='\033[0m'
 
-# 設定
 DEFAULT_ENV_FILE=".env"
 DEFAULT_ENVIRONMENT="production"
 
-# 使用方法を表示
 show_help() {
-    echo -e "${COLOR_GREEN}GitHub Environment Secrets 同期スクリプト${COLOR_NC}"
+    echo -e "${COLOR_GREEN}GitHub Environment Variables 同期スクリプト${COLOR_NC}"
     echo ""
     echo -e "${COLOR_YELLOW}使用方法:${COLOR_NC}"
     echo -e "  $0 [OPTIONS]"
@@ -39,39 +36,27 @@ show_help() {
     echo -e "  $0 --help"
 }
 
-# 環境変数ファイルを解析
 parse_env_file() {
     local file="$1"
-    local -A env_vars=()
 
     while IFS= read -r line || [ -n "$line" ]; do
-        # コメント行をスキップ
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
-        # 空行をスキップ
         [[ "$line" =~ ^[[:space:]]*$ ]] && continue
 
-        # KEY=VALUE 形式の行を解析
         if [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*(.*)$ ]]; then
             key="${BASH_REMATCH[1]}"
             value="${BASH_REMATCH[2]}"
 
-            # 値から引用符を削除
             value="${value%\"}"
             value="${value#\"}"
             value="${value%\'}"
             value="${value#\'}"
 
-            env_vars["$key"]="$value"
+            echo "$key=$value"
         fi
     done < "$file"
-
-    # 連想配列を出力（キー=値の形式）
-    for key in "${!env_vars[@]}"; do
-        echo "$key=${env_vars[$key]}"
-    done
 }
 
-# GitHub CLI の存在確認
 check_github_cli() {
     if ! command -v gh >/dev/null 2>&1; then
         echo -e "${COLOR_RED}エラー: GitHub CLI (gh) がインストールされていません。${COLOR_NC}" >&2
@@ -80,16 +65,14 @@ check_github_cli() {
     fi
 }
 
-# GitHub認証の確認
 check_github_auth() {
-    if ! gh auth status >/dev/null 2>&1; then
+    if ! gh auth status -h github.com >/dev/null 2>&1; then
         echo -e "${COLOR_RED}エラー: GitHub CLI の認証が設定されていません。${COLOR_NC}" >&2
         echo -e "${COLOR_YELLOW}認証方法: gh auth login${COLOR_NC}" >&2
         exit 1
     fi
 }
 
-# リポジトリの存在確認
 check_repository() {
     local repo="$1"
 
@@ -100,23 +83,27 @@ check_repository() {
     fi
 }
 
-# Environment の存在確認・作成
 ensure_environment() {
     local repo="$1"
     local environment="$2"
 
     echo -e "${COLOR_BLUE}Environment '$environment' の確認中...${COLOR_NC}"
 
-    # GitHub CLI を使用してEnvironmentの存在を確認
     if ! gh api "repos/$repo/environments/$environment" >/dev/null 2>&1; then
         echo -e "${COLOR_YELLOW}Environment '$environment' が存在しません。作成します...${COLOR_NC}"
 
-        # Environment を作成
-        gh api --method PUT "repos/$repo/environments/$environment" \
-            --field wait_timer=0 \
-            --field prevent_self_review=false \
-            --field reviewers='[]' \
-            --field deployment_branch_policy='null' >/dev/null
+        local payload=$(cat <<EOF
+{
+  "wait_timer": 0,
+  "prevent_self_review": false,
+  "reviewers": [],
+  "deployment_branch_policy": null
+}
+EOF
+)
+
+        echo "$payload" | gh api --method PUT "repos/$repo/environments/$environment" \
+            --input - >/dev/null
 
         echo -e "${COLOR_GREEN}Environment '$environment' を作成しました。${COLOR_NC}"
     else
@@ -124,8 +111,7 @@ ensure_environment() {
     fi
 }
 
-# シークレットを設定
-set_secret() {
+set_variable() {
     local repo="$1"
     local environment="$2"
     local key="$3"
@@ -139,8 +125,7 @@ set_secret() {
 
     echo -e "${COLOR_BLUE}$key を設定中...${COLOR_NC}"
 
-    # GitHub CLI を使用してシークレットを設定
-    echo "$value" | gh secret set "$key" --repo "$repo" --env "$environment"
+    echo "$value" | gh variable set "$key" --repo "$repo" --env "$environment"
 
     if [ $? -eq 0 ]; then
         echo -e "${COLOR_GREEN}✅ $key を設定しました${COLOR_NC}"
@@ -150,7 +135,6 @@ set_secret() {
     fi
 }
 
-# メイン処理
 main() {
     local env_file="$DEFAULT_ENV_FILE"
     local environment="$DEFAULT_ENVIRONMENT"
@@ -158,7 +142,6 @@ main() {
     local token=""
     local dry_run="false"
 
-    # 引数解析
     while [[ $# -gt 0 ]]; do
         case $1 in
             -f|--file)
@@ -193,9 +176,7 @@ main() {
         esac
     done
 
-    # 必須パラメータの確認
     if [ -z "$repo" ]; then
-        # 現在のリポジトリから自動取得を試行
         if git remote get-url origin >/dev/null 2>&1; then
             repo_url=$(git remote get-url origin)
             if [[ "$repo_url" =~ github\.com[:/]([^/]+/[^/]+)(\.git)?$ ]]; then
@@ -212,26 +193,22 @@ main() {
         fi
     fi
 
-    # 環境変数ファイルの存在確認
     if [ ! -f "$env_file" ]; then
         echo -e "${COLOR_RED}エラー: 環境変数ファイル '$env_file' が見つかりません。${COLOR_NC}" >&2
         exit 1
     fi
 
-    # GitHub CLI と認証の確認
     check_github_cli
     check_github_auth
 
-    # リポジトリの確認
     check_repository "$repo"
 
-    # GitHub Personal Access Token の設定
     if [ -n "$token" ]; then
         export GH_TOKEN="$token"
     fi
 
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
-    echo -e "  🚀 ${COLOR_GREEN}GitHub Environment Secrets 同期${COLOR_NC}"
+    echo -e "  🚀 ${COLOR_GREEN}GitHub Environment Variables 同期${COLOR_NC}"
     echo -e "  ファイル: ${COLOR_YELLOW}$env_file${COLOR_NC}"
     echo -e "  リポジトリ: ${COLOR_YELLOW}$repo${COLOR_NC}"
     echo -e "  Environment: ${COLOR_YELLOW}$environment${COLOR_NC}"
@@ -241,12 +218,10 @@ main() {
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
     echo ""
 
-    # Environment の確認・作成
     if [ "$dry_run" = "false" ]; then
         ensure_environment "$repo" "$environment"
     fi
 
-    # 環境変数の解析と設定
     echo -e "${COLOR_BLUE}環境変数を解析中...${COLOR_NC}"
 
     local count=0
@@ -256,7 +231,7 @@ main() {
         if [ -n "$key" ] && [ -n "$value" ]; then
             count=$((count + 1))
 
-            if set_secret "$repo" "$environment" "$key" "$value" "$dry_run"; then
+            if set_variable "$repo" "$environment" "$key" "$value" "$dry_run"; then
                 success_count=$((success_count + 1))
             fi
         fi
@@ -286,5 +261,4 @@ main() {
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
 }
 
-# スクリプト実行
 main "$@"
