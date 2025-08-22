@@ -107,23 +107,11 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 			brew install hurl; \
 			;; \
 		"linux") \
-			if command -v apt >/dev/null 2>&1; then \
-				sudo apt update && sudo apt install -y hurl; \
-			elif command -v yum >/dev/null 2>&1; then \
-				sudo yum install -y hurl; \
-			elif command -v dnf >/dev/null 2>&1; then \
-				sudo dnf install -y hurl; \
-			elif command -v pacman >/dev/null 2>&1; then \
-				sudo pacman -S --noconfirm hurl; \
-			elif command -v zypper >/dev/null 2>&1; then \
-				sudo zypper install -y hurl; \
-			else \
-				echo "⚠️  パッケージマネージャーでhurlが見つからない場合、公式サイトからバイナリをダウンロードします..."; \
-				curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4)-x86_64-unknown-linux-gnu.tar.gz; \
-				tar -xzf hurl-*.tar.gz; \
-				sudo mv hurl-*/bin/hurl /usr/local/bin/; \
-				rm -rf hurl-*; \
-			fi; \
+            echo "⚠️  パッケージマネージャーでhurlが見つからない場合、公式サイトからバイナリをダウンロードします..."; \
+            curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4)-x86_64-unknown-linux-gnu.tar.gz; \
+            tar -xzf hurl-*.tar.gz; \
+            sudo mv hurl-*/bin/hurl /usr/local/bin/; \
+            rm -rf hurl-*; \
 			;; \
 		"windows") \
 			if command -v winget >/dev/null 2>&1; then \

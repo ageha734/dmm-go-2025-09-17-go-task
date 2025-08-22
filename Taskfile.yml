@@ -18,25 +18,127 @@ tasks:
   # --------------------------------------------------------------------------
   # Setup Tasks
   # --------------------------------------------------------------------------
-  :setup:mysql:
+
+  :setup:mysql:macos:
     internal: true
     prefix: "🔧"
+    platforms:
+    - darwin
     status:
       - command -v mysql >/dev/null 2>&1
     cmds:
-      - |
-        echo "mysql-clientをインストールします..."
-        # TODO: バイナリをダウンロードして、PATHに追加する
+      - brew install mysql-client
 
-  :setup:hurl:
+  :setup:mysql:linux:
+    internal: true
+    prefix: "🔧"
+    platforms:
+    - linux
+    status:
+      - command -v mysql >/dev/null 2>&1
+    cmds:
+      - task: :setup:mysql:linux:apt
+      - task: :setup:mysql:linux:yum
+      - task: :setup:mysql:linux:dnf
+      - task: :setup:mysql:linux:pacman
+      - task: :setup:mysql:linux:zypper
+
+  :setup:mysql:linux:apt:
     internal: true
     prefix: "🔧"
     status:
+      - command -v apt >/dev/null 2>&1
+    cmds:
+      - sudo apt-get update && sudo apt-get install -y mysql-client
+
+  :setup:mysql:linux:yum:
+    internal: true
+    prefix: "🔧"
+    status:
+      - command -v yum >/dev/null 2>&1
+    cmds:
+      - sudo yum install -y mysql
+
+  :setup:mysql:linux:dnf:
+    internal: true
+    prefix: "🔧"
+    status:
+      - command -v dnf >/dev/null 2>&1
+    cmds:
+      - sudo dnf install -y mysql
+
+  :setup:mysql:linux:pacman:
+    internal: true
+    prefix: "🔧"
+    status:
+      - command -v pacman >/dev/null 2>&1
+    cmds:
+      - sudo pacman -S --noconfirm mysql
+
+  :setup:mysql:linux:zypper:
+    internal: true
+    prefix: "🔧"
+    status:
+      - command -v zypper >/dev/null 2>&1
+    cmds:
+      - sudo zypper install -y mysql-client
+
+  :setup:mysql:windows:
+    internal: true
+    prefix: "🔧"
+    platforms:
+    - windows
+    status:
+      - command -v mysql >/dev/null 2>&1
+    cmds:
+      - winget install --id Oracle.MySQL
+
+  :setup:mysql:
+    internal: true
+    cmds:
+      - task: :setup:mysql:macos
+      - task: :setup:mysql:linux
+      - task: :setup:mysql:windows
+
+  :setup:hurl:macos:
+    internal: true
+    prefix: "🔧"
+    platforms:
+    - darwin
+    status:
       - command -v hurl >/dev/null 2>&1
     cmds:
-      - |
-        echo "hurlをインストールします..."
-        curl --location https://hurl.dev/install.sh | bash
+      - brew install hurl
+
+  :setup:hurl:linux:
+    internal: true
+    prefix: "🔧"
+    platforms:
+    - linux
+    status:
+      - command -v hurl >/dev/null 2>&1
+    cmds:
+      - curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4)-x86_64-unknown-linux-gnu.tar.gz; \
+        tar -xzf hurl-*.tar.gz; \
+        sudo mv hurl-*/bin/hurl /usr/local/bin/; \
+        rm -rf hurl-*.tar.gz;
+
+  :setup:hurl:windows:
+    internal: true
+    prefix: "🔧"
+    platforms:
+    - windows
+    status:
+      - command -v hurl >/dev/null 2>&1
+    cmds:
+      - winget install hurl
+
+  :setup:hurl:
+    internal: true
+    cmds:
+      - task: :setup:hurl:macos
+      - task: :setup:hurl:linux
+      - task: :setup:hurl:windows
 
   :setup:shlack:
     internal: true
@@ -44,9 +146,7 @@ tasks:
     status:
       - command -v shlack >/dev/null 2>&1
     cmds:
-      - |
-        echo "shlackをインストールします..."
-        curl --location https://raw.githubusercontent.com/dmm-com/shlack/install.sh | bash
+      - curl --location https://raw.githubusercontent.com/ageha734/shlack/install.sh | bash
 
   setup:
     desc: "✅ 開発に必要なCLIツールをインストールします"
