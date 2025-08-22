@@ -108,10 +108,11 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 			;; \
 		"linux") \
 			echo "⚠️  パッケージマネージャーでhurlが見つからない場合、公式サイトからバイナリをダウンロードします..."; \
-			curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4)-x86_64-unknown-linux-gnu.tar.gz; \
+			HURL_VERSION=$$(curl -s https://api.github.com/repos/Orange-OpenSource/hurl/releases/latest | grep tag_name | cut -d '"' -f 4); \
+			curl -LO https://github.com/Orange-OpenSource/hurl/releases/latest/download/hurl-$${HURL_VERSION}-x86_64-unknown-linux-gnu.tar.gz; \
 			tar -xzf hurl-*.tar.gz; \
 			sudo mv hurl-*/bin/hurl /usr/local/bin/; \
-			rm -rf hurl-*; \
+			rm -rf hurl-$${HURL_VERSION}-x86_64-unknown-linux-gnu.tar.gz; \
 			;; \
 		"windows") \
 			if command -v winget >/dev/null 2>&1; then \
