@@ -28,6 +28,23 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
+    - name: Create .env file from environment variables
+      env:
+        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
+        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
+        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
+        DATABASE_USER: ${{ vars.DATABASE_USER }}
+        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
+        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+      run: |
+        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
+        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
+        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
+        echo "DATABASE_USER=${DATABASE_USER}" >> .env
+        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
+        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
+        echo "Created .env file with environment variables"
+
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
@@ -143,6 +160,23 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
+    - name: Create .env file from environment variables
+      env:
+        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
+        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
+        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
+        DATABASE_USER: ${{ vars.DATABASE_USER }}
+        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
+        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+      run: |
+        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
+        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
+        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
+        echo "DATABASE_USER=${DATABASE_USER}" >> .env
+        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
+        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
+        echo "Created .env file with environment variables"
+
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
@@ -233,6 +267,23 @@ jobs:
     - name: Install Task
       run: |
         sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
+    - name: Create .env file from environment variables
+      env:
+        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
+        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
+        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
+        DATABASE_USER: ${{ vars.DATABASE_USER }}
+        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
+        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+      run: |
+        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
+        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
+        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
+        echo "DATABASE_USER=${DATABASE_USER}" >> .env
+        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
+        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
+        echo "Created .env file with environment variables"
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
