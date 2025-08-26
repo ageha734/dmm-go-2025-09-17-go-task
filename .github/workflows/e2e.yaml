@@ -9,77 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: "1.24"
-
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Create .env file from environment variables
-      env:
-        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
-        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
-        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
-        DATABASE_USER: ${{ vars.DATABASE_USER }}
-        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
-        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
-      run: |
-        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
-        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
-        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
-        echo "DATABASE_USER=${DATABASE_USER}" >> .env
-        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
-        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
-        echo "Created .env file with environment variables"
+    - name: Setup Go Project
+      uses: ./.github/actions/setup-go-project
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
-    - name: Build Docker images
-      run: |
-        docker compose build mysql api
-
-    - name: Start services
-      run: |
-        docker compose up -d mysql api
-
-    - name: Wait for services to be ready
-      run: |
-        echo "Waiting for services to be ready..."
-        sleep 30
-
-        max_attempts=30
-        attempt=1
-
-        while [ $attempt -le $max_attempts ]; do
-          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-            echo "API is ready!"
-            break
-          fi
-
-          if [ $attempt -eq $max_attempts ]; then
-            echo "API failed to start within timeout"
-            docker compose logs api
-            exit 1
-          fi
-
-          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting..."
-          sleep 2
-          attempt=$((attempt + 1))
-        done
+    - name: Setup Docker Services
+      uses: ./.github/actions/setup-docker-services
 
     - name: Run E2E tests with Raw Commands
       run: |
@@ -123,12 +60,10 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: |
-        docker compose down -v
+      run: docker compose down -v
 
     - name: Save execution time
-      run: |
-        echo "raw_commands,${{ env.RAW_COMMANDS_TIME }}" > raw_commands_time.csv
+      run: echo "raw_commands,${{ env.RAW_COMMANDS_TIME }}" > raw_commands_time.csv
 
     - name: Upload execution time artifact
       uses: actions/upload-artifact@v4
@@ -141,77 +76,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: "1.24"
-
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Install dependencies
-      run: go mod download
-
-    - name: Create .env file from environment variables
-      env:
-        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
-        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
-        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
-        DATABASE_USER: ${{ vars.DATABASE_USER }}
-        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
-        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
-      run: |
-        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
-        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
-        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
-        echo "DATABASE_USER=${DATABASE_USER}" >> .env
-        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
-        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
-        echo "Created .env file with environment variables"
+    - name: Setup Go Project
+      uses: ./.github/actions/setup-go-project
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
-    - name: Build Docker images
-      run: |
-        docker compose build mysql api
-
-    - name: Start services
-      run: |
-        docker compose up -d mysql api
-
-    - name: Wait for services to be ready
-      run: |
-        echo "Waiting for services to be ready..."
-        sleep 30
-
-        max_attempts=30
-        attempt=1
-
-        while [ $attempt -le $max_attempts ]; do
-          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-            echo "API is ready!"
-            break
-          fi
-
-          if [ $attempt -eq $max_attempts ]; then
-            echo "API failed to start within timeout"
-            docker compose logs api
-            exit 1
-          fi
-
-          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting..."
-          sleep 2
-          attempt=$((attempt + 1))
-        done
+    - name: Setup Docker Services
+      uses: ./.github/actions/setup-docker-services
 
     - name: Run E2E tests with Make
       run: |
@@ -227,12 +99,10 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: |
-        docker compose down -v
+      run: docker compose down -v
 
     - name: Save execution time
-      run: |
-        echo "make,${{ env.MAKE_TIME }}" > make_time.csv
+      run: echo "make,${{ env.MAKE_TIME }}" > make_time.csv
 
     - name: Upload execution time artifact
       uses: actions/upload-artifact@v4
@@ -245,78 +115,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: "1.24"
-
-    - name: Cache Go modules
-      uses: actions/cache@v4
-      with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-
-    - name: Install dependencies
-      run: go mod download
+    - name: Setup Go Project
+      uses: ./.github/actions/setup-go-project
 
     - name: Install Task
-      run: |
-        sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
-
-    - name: Create .env file from environment variables
-      env:
-        SLACK_TOKEN: ${{ vars.SLACK_TOKEN }}
-        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
-        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
-        DATABASE_USER: ${{ vars.DATABASE_USER }}
-        DATABASE_PASSWORD: ${{ vars.DATABASE_PASSWORD }}
-        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
-      run: |
-        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
-        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
-        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
-        echo "DATABASE_USER=${DATABASE_USER}" >> .env
-        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
-        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
-        echo "Created .env file with environment variables"
+      run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
-    - name: Build Docker images
-      run: |
-        docker compose build mysql api
-
-    - name: Start services
-      run: |
-        docker compose up -d mysql api
-
-    - name: Wait for services to be ready
-      run: |
-        max_attempts=30
-        attempt=1
-
-        while [ $attempt -le $max_attempts ]; do
-          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
-            echo "API is ready!"
-            break
-          fi
-
-          if [ $attempt -eq $max_attempts ]; then
-            echo "API failed to start within timeout"
-            docker compose logs api
-            exit 1
-          fi
-
-          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting..."
-          sleep 2
-          attempt=$((attempt + 1))
-        done
+    - name: Setup Docker Services
+      uses: ./.github/actions/setup-docker-services
 
     - name: Run E2E tests with Task
       run: |
@@ -332,12 +141,10 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: |
-        docker compose down -v
+      run: docker compose down -v
 
     - name: Save execution time
-      run: |
-        echo "task,${{ env.TASK_TIME }}" > task_time.csv
+      run: echo "task,${{ env.TASK_TIME }}" > task_time.csv
 
     - name: Upload execution time artifact
       uses: actions/upload-artifact@v4

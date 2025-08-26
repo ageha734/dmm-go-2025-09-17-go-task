@@ -1,0 +1,41 @@
+name: 'Setup Docker Services'
+description: 'Build and start Docker services for E2E testing'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Docker images
+      shell: bash
+      run: |
+        docker compose build mysql api
+
+    - name: Start services
+      shell: bash
+      run: |
+        docker compose up -d mysql api
+
+    - name: Wait for services to be ready
+      shell: bash
+      run: |
+        echo "Waiting for services to be ready..."
+        sleep 30
+
+        max_attempts=30
+        attempt=1
+
+        while [ $attempt -le $max_attempts ]; do
+          if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+            echo "API is ready!"
+            break
+          fi
+
+          if [ $attempt -eq $max_attempts ]; then
+            echo "API failed to start within timeout"
+            docker compose logs api
+            exit 1
+          fi
+
+          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting..."
+          sleep 2
+          attempt=$((attempt + 1))
+        done

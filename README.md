@@ -1,4 +1,4 @@
-# DMM Go Task - 認証認可・会員基盤・不正対策システム
+# dmm-go-2025-09-17-go-task
 
 このプロジェクトは、Go言語とGinフレームワークを使用して構築された包括的なAPIサービスです。認証認可、会員基盤、不正対策システムを統合したセキュアなプラットフォームを提供します。
 
@@ -56,11 +56,52 @@ internal/
 
 ### 1. 環境変数の設定
 
+#### 初期設定
+
 ```bash
-cp .env.example .env
+# 環境変数管理スクリプトを使用して初期化
+./scripts/env-manager.sh init
+
+# または手動でテンプレートからコピー
+cp .env.template .env
 ```
 
-`.env`ファイルを編集して、データベース接続情報やJWTシークレットを設定してください。
+`.env`ファイルを編集して、実際の値を設定してください。
+
+#### 環境変数管理
+
+このプロジェクトでは、統一された環境変数管理システムを使用しています：
+
+```bash
+# 環境変数の検証
+./scripts/env-manager.sh validate
+
+# GitHub Actionsとの同期
+./scripts/env-manager.sh sync-to-github
+
+# 環境間の整合性チェック
+./scripts/env-manager.sh check-consistency
+
+# ヘルプの表示
+./scripts/env-manager.sh help
+```
+
+#### 必要な環境変数
+
+| 変数名 | 説明 | デフォルト値 |
+|--------|------|-------------|
+| `SLACK_TOKEN` | Slack通知用トークン | - |
+| `DATABASE_HOST` | データベースホスト | `mysql` |
+| `DATABASE_PORT` | データベースポート | `3306` |
+| `DATABASE_USER` | データベースユーザー | `testuser` |
+| `DATABASE_PASSWORD` | データベースパスワード | `password` |
+| `DATABASE_NAME` | データベース名 | `testdb` |
+| `REDIS_HOST` | Redisホスト | `redis` |
+| `REDIS_PORT` | Redisポート | `6379` |
+| `REDIS_PASSWORD` | Redisパスワード | `password` |
+| `JWT_SECRET` | JWT署名用シークレット | - |
+| `APP_PORT` | アプリケーションポート | `8080` |
+| `APP_ENV` | 実行環境 | `development` |
 
 ### 2. 依存関係のインストール
 

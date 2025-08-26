@@ -1,0 +1,37 @@
+name: 'Setup Environment Variables'
+description: 'Create .env file from GitHub secrets and variables'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create .env file from environment variables
+      shell: bash
+      env:
+        SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
+        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
+        DATABASE_USER: ${{ vars.DATABASE_USER }}
+        DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+        REDIS_HOST: ${{ vars.REDIS_HOST }}
+        REDIS_PORT: ${{ vars.REDIS_PORT }}
+        REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        APP_PORT: ${{ vars.APP_PORT }}
+        APP_ENV: ${{ vars.APP_ENV }}
+      run: |
+        echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
+        echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
+        echo "DATABASE_HOST_TEST=localhost" >> .env
+        echo "DATABASE_PORT=${DATABASE_PORT}" >> .env
+        echo "DATABASE_USER=${DATABASE_USER}" >> .env
+        echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
+        echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
+        echo "REDIS_HOST=${REDIS_HOST}" >> .env
+        echo "REDIS_HOST_TEST=localhost" >> .env
+        echo "REDIS_PORT=${REDIS_PORT}" >> .env
+        echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
+        echo "JWT_SECRET=${JWT_SECRET}" >> .env
+        echo "APP_PORT=${APP_PORT}" >> .env
+        echo "APP_ENV=${APP_ENV}" >> .env
+        echo "✅ Created .env file with all environment variables"

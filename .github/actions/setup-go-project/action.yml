@@ -1,0 +1,28 @@
+name: 'Setup Go Project'
+description: 'Setup Go environment and dependencies for the project'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: "1.24"
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Install dependencies
+      shell: bash
+      run: go mod download
+
+    - name: Setup environment variables
+      uses: ./.github/actions/setup-env
