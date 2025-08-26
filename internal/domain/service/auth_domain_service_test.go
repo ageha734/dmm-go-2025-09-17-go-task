@@ -291,8 +291,9 @@ func TestAuthDomainServiceRegister(t *testing.T) {
 			userName: "テストユーザー",
 			age:      25,
 			setupMock: func(userRepo *MockUserRepository, authRepo *MockAuthRepository, roleRepo *MockRoleRepository) {
-				// 弱いパスワードの場合、パスワード検証で早期にエラーが返されるため、
-				// リポジトリのメソッドは呼び出されない
+				tempAuth := &entity.Auth{}
+				err := tempAuth.ValidatePassword("123")
+				assert.Error(t, err, "Password validation should fail for weak password")
 			},
 			wantErr: true,
 		},
