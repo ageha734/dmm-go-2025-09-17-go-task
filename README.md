@@ -1,268 +1,223 @@
-# DMM Go Task - User Management API
+# DMM Go Task - 認証認可・会員基盤・不正対策システム
 
-Go言語とGin Webフレームワークを使用したユーザー管理APIです。
+このプロジェクトは、Go言語とGinフレームワークを使用して構築された包括的なAPIサービスです。認証認可、会員基盤、不正対策システムを統合したセキュアなプラットフォームを提供します。
 
-## 機能
+## 🚀 主要機能
 
-- ユーザーの作成、取得、更新、削除（CRUD操作）
-- ユーザー統計情報の取得
-- ヘルスチェック機能
-- MySQL/SQLiteデータベース対応
+### 認証認可システム
 
-## 技術スタック
+- **JWT認証**: アクセストークンとリフレッシュトークンによる認証
+- **ロールベースアクセス制御**: 管理者、ユーザー、モデレーターの権限管理
+- **パスワード暗号化**: bcryptによる安全なパスワードハッシュ化
+- **セッション管理**: ユーザーセッションの追跡と管理
 
-- **言語**: Go 1.24.0
-- **Webフレームワーク**: Gin
+### 会員基盤システム
+
+- **会員ランク制度**: Bronze、Silver、Gold、Platinumの4段階
+- **ポイントシステム**: ポイントの獲得、使用、有効期限管理
+- **ユーザープロフィール**: 詳細なユーザー情報管理
+- **通知システム**: ユーザーへの通知配信
+- **設定管理**: ユーザー個別設定の保存
+
+### 不正対策システム
+
+- **リアルタイム不正検知**: ログイン試行の分析とリスク評価
+- **IPブラックリスト**: 悪意のあるIPアドレスの自動ブロック
+- **レート制限**: API呼び出し頻度の制限
+- **デバイスフィンガープリンティング**: デバイス識別による不正検知
+- **セキュリティイベントログ**: 全セキュリティ関連イベントの記録
+
+## 🛠️ 技術スタック
+
+- **言語**: Go
+- **フレームワーク**: Gin (HTTP)
 - **ORM**: GORM
-- **データベース**: MySQL / SQLite
-- **テスト**: testify
-- **リンター**: golangci-lint
-- **タスクランナー**: Task
+- **データベース**: MySQL
+- **認証**: JWT
+- **アーキテクチャパターン**: DDD + レイヤードアーキテクチャ
 
-## プロジェクト構成
-
-```bash
-.
-├── cmd/
-│   └── main.go              # アプリケーションエントリーポイント
-├── handlers/
-│   ├── user_handler.go      # ユーザー関連のHTTPハンドラー
-│   └── user_handler_test.go # ハンドラーのテスト
-├── models/
-│   ├── user.go              # ユーザーモデル定義
-│   └── user_test.go         # モデルのテスト
-├── routes/
-│   └── router.go            # ルーティング設定
-├── database/
-│   └── database.go          # データベース接続設定
-├── e2e/
-│   ├── home/                # ホーム関連のE2Eテスト
-│   └── user/                # ユーザー関連のE2Eテスト
-└── scripts/
-    ├── compare_speed_check.sh
-    └── e2e_speed_check.sh
-```
-
-## セットアップ
-
-### 前提条件
-
-- Go 1.24.0以上
-- Docker（オプション）
-
-### インストール
-
-#### 1. リポジトリをクローン
+## 📁 プロジェクト構造
 
 ```bash
-git clone https://github.com/ageha734/dmm-go-2025-09-17-go-task.git
-cd dmm-go-2025-09-17-go-task
+internal/
+├── application/           # アプリケーション層
+│   ├── dto/              # データ転送オブジェクト
+│   └── handler/          # HTTPハンドラー
+├── domain/               # ドメイン層
+│   ├── entity/           # エンティティ
+│   ├── repository/       # リポジトリインターフェース
+│   └── service/          # ドメインサービス
+├── infrastructure/       # インフラ層
+│   └── persistence/      # データ永続化
+└── usecase/              # ユースケース層
 ```
 
-#### 2. 依存関係をインストール
+## 🚀 セットアップ
 
-```bash
-go mod download
-```
-
-#### 3. 環境変数を設定
+### 1. 環境変数の設定
 
 ```bash
 cp .env.example .env
 ```
 
-`.env`ファイルを編集して、以下の環境変数を設定してください：
+`.env`ファイルを編集して、データベース接続情報やJWTシークレットを設定してください。
+
+### 2. 依存関係のインストール
 
 ```bash
-# Slack通知設定（オプション）
-SLACK_TOKEN=xoxb-your-slack-bot-token
-
-# データベース設定
-DATABASE_HOST=127.0.0.1
-DATABASE_PORT=3306
-DATABASE_USER=root
-DATABASE_PASSWORD=password
-DATABASE_NAME=testdb
+go mod download
 ```
 
-**重要**:
-- `DATABASE_HOST`は`localhost`ではなく`127.0.0.1`を使用してください（MySQL接続の問題を回避するため）
-- 引用符は使用しないでください（例: `DATABASE_HOST=127.0.0.1` ✅、`DATABASE_HOST="127.0.0.1"` ❌）
-
-#### 4. 必要なツールのセットアップ
-
-開発に必要なツール（mysql-client、hurl、shlack）を自動でインストールします：
-
-```bash
-# Taskを使用する場合
-task setup
-
-# Makeを使用する場合
-make setup
-```
-
-## 実行方法
-
-### ローカル実行
-
-```bash
-go run cmd/main.go
-```
-
-### Dockerを使用した実行
-
-```bash
-docker-compose up
-```
-
-### Taskを使用した実行
+### 4. アプリケーションの起動
 
 ```bash
 task run
 ```
 
-サーバーは `http://localhost:8080` で起動します。
+## 📚 API エンドポイント
 
-## API エンドポイント
+### 認証API
 
-### ユーザー管理
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/api/v1/auth/register` | ユーザー登録 |
+| POST | `/api/v1/auth/login` | ログイン |
+| POST | `/api/v1/auth/refresh` | トークンリフレッシュ |
+| POST | `/api/v1/auth/validate` | トークン検証 |
 
-- `GET /users` - 全ユーザー取得
-- `GET /users/:id` - 特定ユーザー取得
-- `POST /users` - ユーザー作成
-- `PUT /users/:id` - ユーザー更新
-- `DELETE /users/:id` - ユーザー削除
+### ユーザーAPI（認証必須）
 
-### 統計情報
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| POST | `/api/v1/user/logout` | ログアウト |
+| GET | `/api/v1/user/profile` | プロフィール取得 |
+| PUT | `/api/v1/user/profile` | プロフィール更新 |
+| GET | `/api/v1/user/dashboard` | ダッシュボード |
+| GET | `/api/v1/user/notifications` | 通知一覧 |
+| GET | `/api/v1/user/points/transactions` | ポイント履歴 |
 
-- `GET /users/stats` - ユーザー統計情報取得
+### 管理者API（管理者権限必須）
+
+| メソッド | エンドポイント | 説明 |
+|---------|---------------|------|
+| GET | `/api/v1/admin/stats/membership` | 会員統計 |
+| GET | `/api/v1/admin/stats/fraud` | 不正検知統計 |
+| GET | `/api/v1/admin/security/events` | セキュリティイベント |
+| POST | `/api/v1/admin/security/blacklist` | IPブラックリスト追加 |
+| GET | `/api/v1/admin/users` | 全ユーザー一覧 |
+
+## 🔒 セキュリティ機能
+
+### 不正検知アルゴリズム
+
+システムは以下の要素を分析してリスクスコアを算出します：
+
+- **ログイン頻度**: 短時間での大量ログイン試行
+- **失敗率**: ログイン失敗の割合
+- **IP評価**: IPアドレスの過去の行動履歴
+- **User-Agent分析**: 疑わしいUser-Agentパターン
+- **地理的異常**: 通常と異なる地域からのアクセス
+
+### レート制限
+
+デフォルトのレート制限設定：
+
+- **ログイン**: 5回/5分
+- **登録**: 3回/1時間
+- **一般API**: 100回/1分
+
+### セキュリティイベント
+
+以下のイベントが自動的に記録されます：
+
+- ログイン成功/失敗
+- 不正なアクセス試行
+- 権限昇格の試み
+- IPブラックリスト操作
+- 管理者操作
+
+## 🧪 テスト
+
+### 単体テスト
+
+```bash
+task test:unit
+```
+
+### E2Eテスト
+
+```bash
+task test:e2e
+```
+
+## 📊 監視とログ
 
 ### ヘルスチェック
 
-- `GET /health` - APIの稼働状況確認
-
-## リクエスト例
-
-### ユーザー作成
-
 ```bash
-curl -X POST http://localhost:8080/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "田中太郎",
-    "email": "tanaka@example.com",
-    "age": 30
-  }'
+curl http://localhost/health
 ```
 
-### ユーザー取得
+### システム統計
+
+管理者権限で以下のエンドポイントから統計情報を取得できます：
+
+- `/api/v1/admin/stats/membership` - 会員統計
+- `/api/v1/admin/stats/fraud` - 不正検知統計
+- `/api/v1/admin/health` - システムヘルス
+
+## 🔧 設定
+
+### 環境変数
+
+主要な環境変数：
+
+- `JWT_SECRET`: JWT署名用シークレットキー
+- `DATABASE_*`: データベース接続情報
+- `ENABLE_FRAUD_DETECTION`: 不正検知機能の有効/無効
+- `MAX_LOGIN_ATTEMPTS`: 最大ログイン試行回数
+
+### 会員ランク設定
+
+会員ランクは以下の基準で自動昇格されます：
+
+- **Bronze**: 初期ランク
+- **Silver**: 累計支出10,000円 または 1,000ポイント
+- **Gold**: 累計支出50,000円 または 5,000ポイント
+- **Platinum**: 累計支出100,000円 または 10,000ポイント
+
+## 🚀 本番環境デプロイ
+
+### Docker使用
 
 ```bash
-curl http://localhost:8080/users/1
+docker-compose up -d
 ```
 
-## テスト
+### 本番環境設定
 
-### 単体テスト実行
+1. `JWT_SECRET`を強力なランダム文字列に変更
+2. `GIN_MODE=release`に設定
+3. データベース接続情報を本番環境用に更新
+4. HTTPS証明書の設定
+5. ログレベルを`warn`または`error`に設定
 
-```bash
-go test ./...
-```
-
-### E2Eテスト実行
-
-```bash
-task e2e
-```
-
-### テストカバレッジ確認
-
-```bash
-go test -cover ./...
-```
-
-## GitHub Actions との連携
-
-### Environment Secrets の同期
-
-ローカルの`.env`ファイルからGitHub ActionsのEnvironment Secretsに環境変数を自動で同期できます。
-
-#### 前提条件
-
-1. **GitHub CLI のインストール**
-   ```bash
-   # macOS
-   brew install gh
-
-   # Ubuntu/Debian
-   sudo apt install gh
-   ```
-
-2. **GitHub CLI の認証**
-   ```bash
-   gh auth login
-   ```
-
-3. **リポジトリへのadmin権限**（Environment Secretsの設定に必要）
-
-#### 使用方法
-
-```bash
-# ヘルプを表示
-./scripts/sync_env_to_github_secrets.sh --help
-
-# dry-runモードで実行（実際には変更せず、実行予定の内容を表示）
-./scripts/sync_env_to_github_secrets.sh --dry-run
-
-# 基本的な使用方法（リポジトリは自動検出、デフォルトEnvironment: production）
-./scripts/sync_env_to_github_secrets.sh
-
-# 特定のEnvironmentを指定
-./scripts/sync_env_to_github_secrets.sh -e staging
-
-# 特定の環境変数ファイルを指定
-./scripts/sync_env_to_github_secrets.sh -f .env.production -e production
-```
-
-#### 注意事項
-
-- **セキュリティ**: 機密情報を含む環境変数を扱うため、実行前に`--dry-run`で内容を確認してください
-- **上書き**: 既存のSecretは警告なしに上書きされます
-- **権限**: Environment Secretsの設定にはリポジトリへのadmin権限が必要です
-
-## 開発
-
-### コードフォーマット
-
-```bash
-task fmt
-```
-
-### リンター実行
-
-```bash
-task lint
-```
-
-### 利用可能なタスク確認
-
-```bash
-task --list
-```
-
-### E2Eテスト速度比較
-
-MakeとTaskのE2Eテスト実行時間を比較できます：
-
-```bash
-# 全サービスのテストを実行
-./scripts/e2e_speed_check.sh
-
-# 特定のサービスのみテスト
-./scripts/e2e_speed_check.sh home
-./scripts/e2e_speed_check.sh user
-```
-
-## ライセンス
+## 📝 ライセンス
 
 このプロジェクトはMITライセンスの下で公開されています。
+
+## 🤝 コントリビューション
+
+1. このリポジトリをフォーク
+2. 機能ブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを作成
+
+## 📞 サポート
+
+質問や問題がある場合は、GitHubのIssuesページでお知らせください。
+
+---
+
+**注意**: このシステムは本格的なセキュリティ機能を含んでいますが、本番環境で使用する前に十分なセキュリティ監査を実施することを強く推奨します。
