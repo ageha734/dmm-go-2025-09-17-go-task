@@ -169,11 +169,10 @@ lint: ## golangci-lintを実行
 
 test-unit: ## ユニットテストを実行
 	@echo "🔬 ユニットテストを実行します..."
-	@go test ./... -overlay=$(shell go run github.com/tenntenn/testtime/cmd/testtime@latest)
+	@TEST=true go test ./... -overlay=$(shell go run github.com/tenntenn/testtime/cmd/testtime@latest)
 
 test-e2e: ## E2Eテストを実行
 	@sh -c ' \
-		trap "shlack luke \"$$([ $$? -eq 0 ] && echo Success! || echo Failed with exit code $$?)\"" EXIT; \
 		echo "🚀 E2Eテストを実行します..."; \
 		TARGETS=${service}; \
 		if [ -z "$$TARGETS" ]; then \
@@ -189,7 +188,7 @@ test-e2e: ## E2Eテストを実行
 			if [ -n "$$SQL_FILES" ]; then \
 				for sql_file in $$SQL_FILES; do \
 					echo "  - DBセットアップ: $$sql_file"; \
-					mysql -u $$DATABASE_USER -h $$DATABASE_HOST -P $$DATABASE_PORT -p$$DATABASE_PASSWORD $$DATABASE_NAME < "$$sql_file"; \
+					mysql -u $$DATABASE_USER -h 127.0.0.1 -P $$DATABASE_PORT -p$$DATABASE_PASSWORD $$DATABASE_NAME < "$$sql_file"; \
 				done; \
 			fi; \
 			echo "  - APIテスト: ./e2e/$$s/index.hurl"; \

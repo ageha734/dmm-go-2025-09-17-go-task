@@ -215,7 +215,8 @@ tasks:
     sources:
       - "**/*.go"
     cmds:
-      - go run ./cmd/main.go
+      - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './mock/seed.sql'
+      - cmd: TEST=true go run ./cmd/main.go
 
   # --------------------------------------------------------------------------
   # Test & Lint Tasks
@@ -223,6 +224,8 @@ tasks:
   lint:
     desc: "🔍 golangci-lintを実行してコードを静的解析します"
     prefix: "🔍"
+    sources:
+    - "**/*.go"
     cmds:
     - go tool golangci-lint run ./...
 
@@ -232,8 +235,10 @@ tasks:
     prefix: "🔬"
     deps:
     - mod
+    sources:
+    - "**/*.go"
     cmds:
-    - go test ./... -overlay=$(go run github.com/tenntenn/testtime/cmd/testtime@latest)
+    - TEST=true go test ./... -overlay=$(go run github.com/tenntenn/testtime/cmd/testtime@latest)
 
   check:
     desc: "🛡️ リンターとすべてのテスト（ユニット、E2E）を実行します"
@@ -242,37 +247,26 @@ tasks:
     - test:unit
     - build
 
-  mysql:
-    internal: true
+  password:
     silent: true
-    prefix: "🚀 [{{.SERVICENAME}}]"
+    desc: "🔒 パスワードを生成します"
+    prefix: "🔒"
     cmds:
-    - mysql -u $DATABASE_USER -h $DATABASE_HOST -P $DATABASE_PORT -p$DATABASE_PASSWORD $DATABASE_NAME < '{{.DML}}'
-    - hurl --test './e2e/{{.SERVICENAME}}/index.hurl'
-
-  test:e2e:db:
-    internal: true
-    silent: true
-    sources:
-    - "./e2e/{{.SERVICENAME}}/*.sql"
-    cmds:
-    - for: sources
-      task: mysql
-      vars:
-        SERVICENAME: '{{.SERVICENAME}}'
-        DML: '{{.ITEM}}'
+    - go run scripts/temp_hash.go {{.CLI_ARGS}}
 
   test:e2e:single:
     internal: true
     silent: true
-    sources:
-    - "./e2e/{{.SERVICENAME}}/index.hurl"
+    prefix: "🚀 -{{.SERVICENAME}}-"
     cmds:
-    - task: test:e2e:db
-      vars:
-        SERVICENAME: '{{.SERVICENAME}}'
+    - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './mock/seed.sql'
+    - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './e2e/{{.SERVICENAME}}/01-insert.sql'
+    - cmd: hurl --test './e2e/{{.SERVICENAME}}/index.hurl'
+      ignore_error: true
+    - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './e2e/{{.SERVICENAME}}/02-delete.sql'
 
   test:e2e:
+    silent: false
     desc: "🚀 E2Eテストを実行します（引数でサービス名を指定可能）"
     summary: |
       アプリケーションをビルドした後、E2Eテストを実行します。
@@ -282,8 +276,9 @@ tasks:
       例:
         task test:e2e -- service1  # service1のテストのみ実行
         task test:e2e              # 全てのテストを実行
+    prefix: "🚀"
     cmds:
-    - defer: shlack luke '{{if .EXIT_CODE}}Failed with{{.EXIT_CODE}}!{{else}}Success!{{end}}'
+    - defer: shlack channel '{{if .EXIT_CODE}}Failed with!{{else}}Success!{{end}}'
     - task: :run-command
       vars:
         COMMAND: test:e2e:single
