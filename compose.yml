@@ -1,37 +1,237 @@
 services:
   mysql:
-    image: mysql:8.0
-    container_name: mysql_db
+    image: mysql:8.0.39
+    hostname: mysql
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.node_type==database
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+        order: stop-first
+    ports:
+    - target: 3306
+      published: ${DATABASE_PORT}
+      protocol: tcp
+      mode: host
+    volumes:
+    - mysql_data:/var/lib/mysql
+    - ./mock/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    - ./mock/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    configs:
+    - source: mysql_conf
+      target: /etc/mysql/conf.d/mysql.conf
+      mode: 0644
     environment:
       MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
       MYSQL_DATABASE: ${DATABASE_NAME}
       MYSQL_USER: ${DATABASE_USER}
       MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --innodb-log-file-size=64M
+      --max-connections=200
+      --slow-query-log=1
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long-query-time=2
+    shm_size: 128mb
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_PASSWORD}"]
       timeout: 20s
       retries: 10
+      interval: 30s
+      start_period: 60s
+    networks:
+    - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 60s
+
+  redis:
+    image: redis:8.2.1-alpine3.22
+    hostname: redis
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.node_type==cache
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+        order: stop-first
+    ports:
+    - target: 6379
+      published: ${REDIS_PORT:-6379}
+      protocol: tcp
+      mode: host
+    volumes:
+    - redis_data:/data
+    configs:
+      - source: redis_conf
+        target: /usr/local/etc/redis/redis.conf
+        mode: 0644
+    command: redis-server /usr/local/etc/redis/redis.conf
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 30s
     networks:
       - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 60s
   api:
-    build: .
-    container_name: api_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: api:latest
+    hostname: api
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.node_type==api
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+        order: stop-first
     env_file: .env
-    ports:
-      - "8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+      start_period: 60s
     networks:
       - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    stop_grace_period: 60s
 
-volumes:
-  mysql_data:
+  nginx:
+    image: nginx:1.29.1-alpine3.22
+    hostname: nginx
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+        - node.labels.node_type==proxy
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: stop-first
+      rollback_config:
+        parallelism: 1
+        delay: 30s
+        order: stop-first
+    ports:
+    - target: 80
+      published: 80
+      protocol: tcp
+      mode: host
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/conf.d/api.conf
+        mode: 0644
+    shm_size: 128mb
+    depends_on:
+      - api
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 60s
 
 networks:
   app-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+volumes:
+  mysql_data:
+    name: mysql_data
+    driver: local
+  redis_data:
+    name: redis_data
+    driver: local
+
+configs:
+  mysql_conf:
+    file: ./.docker/mysql/conf.d/mysql.cnf
+  redis_conf:
+    file: ./.docker/redis/redis.conf
+  nginx_conf:
+    file: ./.docker/nginx/conf.d/api.conf

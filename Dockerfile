@@ -1,24 +1,21 @@
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24.5-alpine3.22 AS builder
 
-WORKDIR /srv
+WORKDIR /app
 
-RUN apk add --no-cache git
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
+    go mod download -x
 
-COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=bind,source=.,target=. \
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/app cmd/main.go
 
-COPY . .
+FROM gcr.io/distroless/base-debian12:nonroot
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app cmd/main.go
+# RUN apk --no-cache add ca-certificates
 
-FROM alpine:latest
+COPY --from=builder /bin/app /bin/app
 
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /srv
-
-COPY --from=builder /srv/app .
-
-EXPOSE 8080
-
-CMD ["./app"]
+ENTRYPOINT ["/bin/app"]
