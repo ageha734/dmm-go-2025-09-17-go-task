@@ -174,6 +174,7 @@ test-unit: ## ユニットテストを実行
 test-e2e: ## E2Eテストを実行
 	@sh -c ' \
 		echo "🚀 E2Eテストを実行します..."; \
+		EXIT_CODE=0; \
 		TARGETS=${service}; \
 		if [ -z "$$TARGETS" ]; then \
 			TARGETS="$(E2E_TEST_NAME)"; \
@@ -184,15 +185,24 @@ test-e2e: ## E2Eテストを実行
 				exit 1; \
 			fi; \
 			echo "🚀 [$$s] のテストを開始します..."; \
-			SQL_FILES=$$(find ./e2e/$$s -name "*.sql"); \
-			if [ -n "$$SQL_FILES" ]; then \
-				for sql_file in $$SQL_FILES; do \
-					echo "  - DBセットアップ: $$sql_file"; \
-					mysql -u $$DATABASE_USER -h 127.0.0.1 -P $$DATABASE_PORT -p$$DATABASE_PASSWORD $$DATABASE_NAME < "$$sql_file"; \
-				done; \
-			fi; \
+			echo "  - DBセットアップ: seed.sql"; \
+			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./mock/seed.sql"; \
+			echo "  - DBセットアップ: ./e2e/$$s/01-insert.sql"; \
+			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./e2e/$$s/01-insert.sql"; \
 			echo "  - APIテスト: ./e2e/$$s/index.hurl"; \
-			hurl --test "./e2e/$$s/index.hurl"; \
+			if ! hurl --test "./e2e/$$s/index.hurl"; then \
+				EXIT_CODE=1; \
+			fi; \
+			echo "  - DBクリーンアップ: ./e2e/$$s/02-delete.sql"; \
+			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./e2e/$$s/02-delete.sql"; \
 			echo "✅ [$$s] のテストが完了しました。"; \
 		done; \
+		if command -v shlack >/dev/null 2>&1; then \
+			if [ $$EXIT_CODE -eq 0 ]; then \
+				shlack channel "Success!"; \
+			else \
+				shlack channel "Failed with!"; \
+			fi; \
+		fi; \
+		exit $$EXIT_CODE; \
 	'
