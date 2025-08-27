@@ -56,7 +56,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 	fi
 
 .install-mysql:
-	@OS=$$($(MAKE) -s .detect-os 2>/dev/null); \
+	@OS=$$($(MAKE) -s .detect-os | grep -v 'make\['); \
 	echo "🔧 OS: $$OS でmysql-clientをインストールします..."; \
 	case $$OS in \
 		"macos") \
@@ -83,7 +83,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 			fi; \
 			;; \
 		"windows") \
-			if command -v winget >/dev/null 2>&1; then \
+			if ! command -v winget >/dev/null 2>&1; then \
 				winget install Oracle.MySQL; \
 			else \
 				echo "❌ wingetがインストールされていません。Windows Package Managerをインストールしてください。"; \
@@ -98,7 +98,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 	echo "✅ mysql-clientのインストールが完了しました。"
 
 .install-hurl:
-	@OS=$$($(MAKE) -s .detect-os 2>/dev/null); \
+	@OS=$$($(MAKE) -s .detect-os | grep -v 'make\['); \
 	echo "🔧 OS: $$OS でhurlをインストールします..."; \
 	case $$OS in \
 		"macos") \
@@ -117,7 +117,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 			rm -rf hurl-$${HURL_VERSION}-x86_64-unknown-linux-gnu.tar.gz; \
 			;; \
 		"windows") \
-			if command -v winget >/dev/null 2>&1; then \
+			if ! command -v winget >/dev/null 2>&1; then \
 				winget install hurl; \
 			else \
 				echo "❌ wingetがインストールされていません。Windows Package Managerをインストールしてください。"; \
@@ -189,7 +189,7 @@ test-e2e: ## E2Eテストを実行
 			fi; \
 			echo "🚀 [$$s] のテストを開始します..."; \
 			echo "  - DBセットアップ: seed.sql"; \
-			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./mock/seed.sql" || echo "⚠️  seed.sqlの実行でエラーが発生しましたが、継続します"; \
+			mysql -h 1227.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./mock/seed.sql" || echo "⚠️  seed.sqlの実行でエラーが発生しましたが、継続します"; \
 			echo "  - DBセットアップ: ./e2e/$$s/01-insert.sql"; \
 			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./e2e/$$s/01-insert.sql" || echo "⚠️  01-insert.sqlの実行でエラーが発生しましたが、継続します"; \
 			echo "  - APIテスト: ./e2e/$$s/index.hurl"; \
