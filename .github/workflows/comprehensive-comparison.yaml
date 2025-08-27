@@ -195,7 +195,6 @@ jobs:
 
     if: github.event.inputs.comparison_type == 'all' || github.event_name == 'schedule'
     name: Multi-Platform Comparison
-    runs-on: ubuntu-latest
 
     permissions:
       contents: read
