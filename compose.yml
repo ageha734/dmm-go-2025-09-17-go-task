@@ -25,7 +25,7 @@ services:
         order: stop-first
     ports:
     - target: 3306
-      published: ${DATABASE_PORT}
+      published: ${DATABASE_PORT:-3306}
       protocol: tcp
       mode: host
     volumes:
@@ -37,10 +37,10 @@ services:
       target: /etc/mysql/conf.d/mysql.conf
       mode: 0644
     environment:
-      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE_NAME}
-      MYSQL_USER: ${DATABASE_USER}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD:-password}
+      MYSQL_DATABASE: ${DATABASE_NAME:-testdb}
+      MYSQL_USER: ${DATABASE_USER:-testuser}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-password}
       MYSQL_CHARSET: utf8mb4
       MYSQL_COLLATION: utf8mb4_unicode_ci
     command: >
@@ -55,7 +55,7 @@ services:
       --long-query-time=2
     shm_size: 128mb
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_PASSWORD:-password}"]
       timeout: 20s
       retries: 10
       interval: 30s
@@ -121,9 +121,6 @@ services:
         max-file: "3"
     stop_grace_period: 60s
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: api:latest
     hostname: api
     restart: unless-stopped
@@ -147,7 +144,12 @@ services:
         parallelism: 1
         delay: 30s
         order: stop-first
-    env_file: .env
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT:-8080}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10000}
+      REGISTER_RATE_LIMIT: ${REGISTER_RATE_LIMIT:-5000}
+      LOGIN_RATE_LIMIT: ${LOGIN_RATE_LIMIT:-5000}
     depends_on:
       mysql:
         condition: service_healthy

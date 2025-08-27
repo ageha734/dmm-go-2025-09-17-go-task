@@ -207,7 +207,7 @@ type JWTClaims struct {
 func getDSN() string {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "testuser:password@tcp(localhost:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
+		dsn = "testuser:password@tcp(mysql:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
 	}
 	return dsn
 }
@@ -227,7 +227,7 @@ func getPort() string {
 func getRedisAddr() string {
 	host := os.Getenv("REDIS_HOST")
 	if host == "" {
-		host = "localhost"
+		host = "redis"
 	}
 
 	port := os.Getenv("REDIS_PORT")
@@ -239,7 +239,11 @@ func getRedisAddr() string {
 }
 
 func getRedisPassword() string {
-	return os.Getenv("REDIS_PASSWORD")
+	password := os.Getenv("REDIS_PASSWORD")
+	if password == "" {
+		password = "password"
+	}
+	return password
 }
 
 func getRedisDB() int {

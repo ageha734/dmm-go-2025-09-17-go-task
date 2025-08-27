@@ -40,29 +40,59 @@
 
 ### 2. セットアップ
 
+⚠️ フォークしてから検証してください。
+
+#### 1. リポジトリをクローン
+
 ```bash
-# 1. リポジトリをクローン
 git clone https://github.com/ageha734/dmm-go-2025-09-17-go-task.git
 cd dmm-go-2025-09-17-go-task
 ```
 
+#### 2. 環境変数の設定
+
 ```bash
-# 2. 環境変数の設定
-cp .env.example .env
+# .envファイルを初期化
+cp .env.template .env
 ```
 
 ```bash
-# 3. 環境変数をGitHub Secretsに登録
+# JWT_SECRETを自動生成して.envファイルに設定
+go run scripts/generate-jwt-secret/main.go -update-env
+```
+
+#### 3. 環境変数をGitHub Secretsに登録
+
+```bash
 ./scripts/sync_env_to_github_secrets.sh
 ```
 
+#### 4. CLIツールをインストール
+
 ```bash
-# 4. 必要なCLIツールをインストール
 task setup
 ```
 
+#### 5. ビルドする
+
 ```bash
-# 5. データベースとAPIサーバーを起動
+# 5a. ローカルでDockerイメージをビルド
+./scripts/local-docker-setup.sh --mode build
+```
+
+```bash
+# 5b. GitHub Container Registryからイメージをプル（事前にプッシュが必要）
+./scripts/local-docker-setup.sh --mode pull -p <token>
+```
+
+```bash
+# 5c. 現在の設定を確認
+./scripts/local-docker-setup.sh --mode status
+```
+
+#### 6. APIサーバーを起動
+
+```bash
 docker compose up -d
 ```
 

@@ -327,8 +327,8 @@ func TestCacheServiceIntegration(t *testing.T) {
 }
 
 func getRedisAddrForTest() string {
-	host := "localhost"
-	if testHost := getEnv("REDIS_HOST_TEST", ""); testHost != "" {
+	host := "redis"
+	if testHost := getEnv("REDIS_HOST", ""); testHost != "" {
 		host = testHost
 	}
 
@@ -337,7 +337,11 @@ func getRedisAddrForTest() string {
 }
 
 func getRedisPasswordForTest() string {
-	return getEnv("REDIS_PASSWORD", "")
+	password := getEnv("REDIS_PASSWORD", "")
+	if password == "" {
+		password = "password"
+	}
+	return password
 }
 
 func getRedisDBForTest() int {

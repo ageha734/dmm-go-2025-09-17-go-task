@@ -249,13 +249,6 @@ tasks:
     - test:unit
     - build
 
-  password:
-    silent: true
-    desc: "🔒 パスワードを生成します"
-    prefix: "🔒"
-    cmds:
-    - go run scripts/temp_hash.go {{.CLI_ARGS}}
-
   test:e2e:single:
     internal: true
     silent: true

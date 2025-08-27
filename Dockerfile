@@ -14,8 +14,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM gcr.io/distroless/base-debian12:nonroot
 
-# RUN apk --no-cache add ca-certificates
-
 COPY --from=builder /bin/app /bin/app
 
 ENTRYPOINT ["/bin/app"]

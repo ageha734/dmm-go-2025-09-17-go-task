@@ -3,13 +3,50 @@ name: E2E Test Performance Comparison
 on:
   workflow_dispatch:
 
+env:
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
 jobs:
+  build-and-push-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.tag }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate image tag
+      id: image-tag
+      run: |
+        TAG="e2e-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::8}"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Generated tag: $TAG"
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:${{ steps.image-tag.outputs.tag }}
+          ghcr.io/${{ github.repository }}:latest
+
   e2e-raw-commands:
     name: E2E Test - Raw Commands
     runs-on: ubuntu-latest
+    needs: build-and-push-image
 
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v4
 
@@ -19,11 +56,17 @@ jobs:
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
 
-    - name: Start timer
-      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+    - name: Update compose.yml with registry image
+      run: |
+        IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
+        sed -i "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
+        echo "Updated compose.yml to use image: $IMAGE_NAME"
 
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+
+    - name: Start timer
+      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
     - name: Run E2E tests with Raw Commands
       run: |
@@ -94,6 +137,7 @@ jobs:
   e2e-make:
     name: E2E Test - Make
     runs-on: ubuntu-latest
+    needs: build-and-push-image
 
     steps:
     - name: Checkout code
@@ -105,11 +149,17 @@ jobs:
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
 
-    - name: Start timer
-      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
+    - name: Update compose.yml with registry image
+      run: |
+        IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
+        sed -i "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
+        echo "Updated compose.yml to use image: $IMAGE_NAME"
 
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+
+    - name: Start timer
+      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
     - name: Run E2E tests with Make
       run: |
@@ -139,6 +189,7 @@ jobs:
   e2e-task:
     name: E2E Test - Task
     runs-on: ubuntu-latest
+    needs: build-and-push-image
 
     steps:
     - name: Checkout code
@@ -150,14 +201,20 @@ jobs:
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
 
+    - name: Update compose.yml with registry image
+      run: |
+        IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
+        sed -i "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
+        echo "Updated compose.yml to use image: $IMAGE_NAME"
+
     - name: Install Task
       run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
-    - name: Start timer
-      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
-
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+
+    - name: Start timer
+      run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
 
     - name: Run E2E tests with Task
       run: |

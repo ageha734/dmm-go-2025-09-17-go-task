@@ -7,12 +7,12 @@ runs:
     - name: Build Docker images
       shell: bash
       run: |
-        docker compose build mysql api
+        docker compose build mysql redis api nginx
 
     - name: Start services
       shell: bash
       run: |
-        docker compose up -d mysql api
+        docker compose up -d mysql redis api nginx
 
     - name: Wait for services to be ready
       shell: bash
