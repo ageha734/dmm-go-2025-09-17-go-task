@@ -83,14 +83,14 @@ ON DUPLICATE KEY UPDATE `updated_at` = NOW();
 
 INSERT INTO `auths` (`user_id`, `email`, `password_hash`, `is_active`, `created_at`, `updated_at`)
 -- bcrypt by password: password123
-SELECT u.id, u.email, '$2a$10$uePseIx2QIGlV.pcz1lAe.GxUAdPurysqImPa9QO8D4.2I5WLLHNa', 1, NOW(), NOW()
+SELECT u.id, u.email, '$2a$10$REZFmltVwij2FQWxEUXLV.O9.V0jbBd0HEmkg6whWd.seoCRTzX7.', 1, NOW(), NOW()
 FROM `users` u
 WHERE u.email = 'user@example.com'
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
 
 INSERT INTO `auths` (`user_id`, `email`, `password_hash`, `is_active`, `created_at`, `updated_at`)
 -- bcrypt by password: password123
-SELECT u.id, u.email, '$2a$10$18gXFytWOJxU1WoVtELaauhrIA9ovgp95x8NLIUaxgr1vQOoohrI6', 1, NOW(), NOW()
+SELECT u.id, u.email, '$2a$10$REZFmltVwij2FQWxEUXLV.O9.V0jbBd0HEmkg6whWd.seoCRTzX7.', 1, NOW(), NOW()
 FROM `users` u
 WHERE u.email = 'testuser1@example.com'
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
