@@ -1,0 +1,225 @@
+name: Update Performance Results
+
+on:
+  schedule:
+    # 毎日 10:00 JST (01:00 UTC)
+    - cron: '0 1 * * *'
+    # 毎日 19:00 JST (10:00 UTC)
+    - cron: '0 10 * * *'
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  update-performance-results:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc make
+
+      - name: Set up environment
+        run: |
+          cp .env.template .env
+          go run scripts/generate-jwt-secret/main.go -update-env
+
+      - name: Start Docker services
+        run: |
+          docker compose up -d
+          sleep 30
+
+      - name: Run E2E performance comparison
+        id: e2e_test
+        run: |
+          # E2Eテストの実行結果をキャプチャ
+          ./scripts/e2e_speed_check.sh > e2e_results.txt 2>&1 || true
+
+          # 結果から実行時間を抽出
+          MAKE_TIME=$(grep -E "^Make\s*:" e2e_results.txt | awk '{print $2}' | sed 's/s$//' || echo "N/A")
+          TASK_TIME=$(grep -E "^Task\s*:" e2e_results.txt | awk '{print $2}' | sed 's/s$//' || echo "N/A")
+
+          # パーセンテージ計算
+          if [[ "$MAKE_TIME" != "N/A" && "$TASK_TIME" != "N/A" ]]; then
+            DIFF=$(echo "scale=3; $MAKE_TIME - $TASK_TIME" | bc -l)
+            if (( $(echo "$DIFF > 0" | bc -l) )); then
+              PERCENT=$(echo "scale=1; $DIFF / $TASK_TIME * 100" | bc -l)
+              WINNER="task"
+            else
+              DIFF=$(echo "scale=3; $TASK_TIME - $MAKE_TIME" | bc -l)
+              PERCENT=$(echo "scale=1; $DIFF / $MAKE_TIME * 100" | bc -l)
+              WINNER="make"
+            fi
+          else
+            PERCENT="N/A"
+            WINNER="unknown"
+          fi
+
+          echo "make_time=$MAKE_TIME" >> $GITHUB_OUTPUT
+          echo "task_time=$TASK_TIME" >> $GITHUB_OUTPUT
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "winner=$WINNER" >> $GITHUB_OUTPUT
+
+      - name: Run Unit test performance comparison
+        id: unit_test
+        run: |
+          # ユニットテストの実行結果をキャプチャ
+          ./scripts/compare_speed_check.sh unit > unit_results.txt 2>&1 || true
+
+          # 結果から実行時間を抽出（timeコマンドの出力から）
+          MAKE_TIME=$(grep -A 3 "make test-unit" unit_results.txt | grep "real" | awk '{print $2}' | sed 's/[ms]//g' | head -1 || echo "N/A")
+          TASK_TIME=$(grep -A 3 "task test:unit" unit_results.txt | grep "real" | awk '{print $2}' | sed 's/[ms]//g' | head -1 || echo "N/A")
+
+          # 時間形式を秒に変換（例: 0m5.123s -> 5.123）
+          if [[ "$MAKE_TIME" =~ ([0-9]+)m([0-9.]+)s ]]; then
+            MAKE_TIME=$(echo "scale=3; ${BASH_REMATCH[1]} * 60 + ${BASH_REMATCH[2]}" | bc -l)
+          elif [[ "$MAKE_TIME" =~ ([0-9.]+)s ]]; then
+            MAKE_TIME=${BASH_REMATCH[1]}
+          fi
+
+          if [[ "$TASK_TIME" =~ ([0-9]+)m([0-9.]+)s ]]; then
+            TASK_TIME=$(echo "scale=3; ${BASH_REMATCH[1]} * 60 + ${BASH_REMATCH[2]}" | bc -l)
+          elif [[ "$TASK_TIME" =~ ([0-9.]+)s ]]; then
+            TASK_TIME=${BASH_REMATCH[1]}
+          fi
+
+          # パーセンテージ計算
+          if [[ "$MAKE_TIME" != "N/A" && "$TASK_TIME" != "N/A" ]]; then
+            DIFF=$(echo "scale=3; $MAKE_TIME - $TASK_TIME" | bc -l)
+            if (( $(echo "$DIFF > 0" | bc -l) )); then
+              PERCENT=$(echo "scale=1; $DIFF / $TASK_TIME * 100" | bc -l)
+              WINNER="task"
+            else
+              DIFF=$(echo "scale=3; $TASK_TIME - $MAKE_TIME" | bc -l)
+              PERCENT=$(echo "scale=1; $DIFF / $MAKE_TIME * 100" | bc -l)
+              WINNER="make"
+            fi
+          else
+            PERCENT="N/A"
+            WINNER="unknown"
+          fi
+
+          echo "make_time=$MAKE_TIME" >> $GITHUB_OUTPUT
+          echo "task_time=$TASK_TIME" >> $GITHUB_OUTPUT
+          echo "percent=$PERCENT" >> $GITHUB_OUTPUT
+          echo "winner=$WINNER" >> $GITHUB_OUTPUT
+
+      - name: Update README with results
+        run: |
+          # 現在の日時を取得
+          CURRENT_DATE=$(date '+%Y年%m月%d日 %H:%M JST')
+
+          # READMEファイルを更新するPythonスクリプトを作成
+          cat > update_readme.py << 'EOF'
+          import re
+          import sys
+
+          def update_readme():
+              # 環境変数から値を取得
+              import os
+              e2e_make_time = os.environ.get('E2E_MAKE_TIME', 'N/A')
+              e2e_task_time = os.environ.get('E2E_TASK_TIME', 'N/A')
+              e2e_percent = os.environ.get('E2E_PERCENT', 'N/A')
+              e2e_winner = os.environ.get('E2E_WINNER', 'unknown')
+
+              unit_make_time = os.environ.get('UNIT_MAKE_TIME', 'N/A')
+              unit_task_time = os.environ.get('UNIT_TASK_TIME', 'N/A')
+              unit_percent = os.environ.get('UNIT_PERCENT', 'N/A')
+              unit_winner = os.environ.get('UNIT_WINNER', 'unknown')
+
+              current_date = os.environ.get('CURRENT_DATE', '')
+
+              # READMEファイルを読み込み
+              with open('README.md', 'r', encoding='utf-8') as f:
+                  content = f.read()
+
+              # E2Eテストの結果を更新
+              e2e_pattern = r'(#### 1回目の実行（E2Eテスト）\s*\n\s*\| ツール\s*\| 実行時間 \(real\)\s*\|\s*\n\s*\| :------- \| :-------------- \|\s*\n\s*\| `make`\s*\| )`[^`]*`(\s*\|\s*\n\s*\| `task`\s*\| )`[^`]*`(\s*\|\s*\n\s*\| \*\*差\*\*\s*\| \*\*)`[^`]*`(\*\* \|)'
+
+              if e2e_make_time != 'N/A' and e2e_task_time != 'N/A':
+                  if e2e_winner == 'task':
+                      winner_text = f'`task`が約{e2e_percent}%高速'
+                  elif e2e_winner == 'make':
+                      winner_text = f'`make`が約{e2e_percent}%高速'
+                  else:
+                      winner_text = 'ほぼ同等'
+
+                  e2e_replacement = f'\\1`{e2e_make_time}s`\\2`{e2e_task_time}s`\\3**{winner_text}**\\4'
+                  content = re.sub(e2e_pattern, e2e_replacement, content)
+
+              # ユニットテストの結果を更新
+              unit_pattern = r'(#### 1回目の実行（ユニットテスト）\s*\n\s*\| ツール\s*\| 実行時間 \(real\)\s*\|\s*\n\s*\| :------- \| :-------------- \|\s*\n\s*\| `make`\s*\| )`[^`]*`(\s*\|\s*\n\s*\| `task`\s*\| )`[^`]*`(\s*\|\s*\n\s*\| \*\*差\*\*\s*\| \*\*)`[^`]*`(\*\* \|)'
+
+              if unit_make_time != 'N/A' and unit_task_time != 'N/A':
+                  if unit_winner == 'task':
+                      winner_text = f'`task`が約{unit_percent}%高速'
+                  elif unit_winner == 'make':
+                      winner_text = f'`make`が約{unit_percent}%高速'
+                  else:
+                      winner_text = 'ほぼ同等'
+
+                  unit_replacement = f'\\1`{unit_make_time}s`\\2`{unit_task_time}s`\\3**{winner_text}**\\4'
+                  content = re.sub(unit_pattern, unit_replacement, content)
+
+              # 更新日時を追加
+              if current_date:
+                  # 実行結果の例の前に更新日時を追加
+                  date_pattern = r'(## 実行結果の例（参考値）)'
+                  date_replacement = f'\\1\n\n**最終更新:** {current_date}\n'
+                  content = re.sub(date_pattern, date_replacement, content)
+
+              # ファイルに書き戻し
+              with open('README.md', 'w', encoding='utf-8') as f:
+                  f.write(content)
+
+          if __name__ == '__main__':
+              update_readme()
+          EOF
+
+          # 環境変数を設定してPythonスクリプトを実行
+          export E2E_MAKE_TIME="${{ steps.e2e_test.outputs.make_time }}"
+          export E2E_TASK_TIME="${{ steps.e2e_test.outputs.task_time }}"
+          export E2E_PERCENT="${{ steps.e2e_test.outputs.percent }}"
+          export E2E_WINNER="${{ steps.e2e_test.outputs.winner }}"
+          export UNIT_MAKE_TIME="${{ steps.unit_test.outputs.make_time }}"
+          export UNIT_TASK_TIME="${{ steps.unit_test.outputs.task_time }}"
+          export UNIT_PERCENT="${{ steps.unit_test.outputs.percent }}"
+          export UNIT_WINNER="${{ steps.unit_test.outputs.winner }}"
+          export CURRENT_DATE="$CURRENT_DATE"
+
+          python3 update_readme.py
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # 変更があるかチェック
+          if git diff --quiet README.md; then
+            echo "No changes to commit"
+          else
+            git add README.md
+            git commit -m "自動更新: パフォーマンス比較結果を更新 ($(date '+%Y-%m-%d %H:%M JST'))"
+            git push
+          fi
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker compose down
+          rm -f e2e_results.txt unit_results.txt update_readme.py
