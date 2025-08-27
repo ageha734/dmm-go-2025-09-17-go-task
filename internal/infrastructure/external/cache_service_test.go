@@ -2,6 +2,7 @@ package external_test
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ type MockRedisClientWithClient struct {
 
 func NewMockRedisClientWithClient() *MockRedisClientWithClient {
 	client := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: getRedisAddrForTest(),
 	})
 
 	return &MockRedisClientWithClient{
@@ -292,7 +293,7 @@ func TestCacheServiceIsTokenBlacklisted(t *testing.T) {
 func TestCacheServiceIntegration(t *testing.T) {
 	t.Skip("Integration test requires Redis instance")
 
-	redisClient := external.NewRedisClient("localhost:6379", "", 0)
+	redisClient := external.NewRedisClient(getRedisAddrForTest(), getRedisPasswordForTest(), getRedisDBForTest())
 	cacheService := external.NewCacheService(redisClient)
 
 	ctx := context.Background()
@@ -323,4 +324,29 @@ func TestCacheServiceIntegration(t *testing.T) {
 
 	_, err = cacheService.GetUser(ctx, user.ID)
 	assert.Error(t, err)
+}
+
+func getRedisAddrForTest() string {
+	host := "localhost"
+	if testHost := getEnv("REDIS_HOST_TEST", ""); testHost != "" {
+		host = testHost
+	}
+
+	port := getEnv("REDIS_PORT", "6379")
+	return host + ":" + port
+}
+
+func getRedisPasswordForTest() string {
+	return getEnv("REDIS_PASSWORD", "")
+}
+
+func getRedisDBForTest() int {
+	return 0
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

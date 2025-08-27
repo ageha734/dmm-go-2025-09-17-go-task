@@ -67,7 +67,7 @@ func main() {
 	)
 	fraudUsecase := usecase.NewFraudUsecase(fraudDomainService)
 
-	redisClient := external.NewRedisClient("localhost:6379", "", 0)
+	redisClient := external.NewRedisClient(getRedisAddr(), getRedisPassword(), getRedisDB())
 	cacheService := external.NewCacheService(redisClient)
 
 	authMiddleware := middleware.NewAuthMiddleware(authDomainService, cacheService)
@@ -218,4 +218,26 @@ func getPort() string {
 		port = "8080"
 	}
 	return port
+}
+
+func getRedisAddr() string {
+	host := os.Getenv("REDIS_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
+	port := os.Getenv("REDIS_PORT")
+	if port == "" {
+		port = "6379"
+	}
+
+	return host + ":" + port
+}
+
+func getRedisPassword() string {
+	return os.Getenv("REDIS_PASSWORD")
+}
+
+func getRedisDB() int {
+	return 0
 }
