@@ -198,12 +198,5 @@ test-e2e: ## E2Eテストを実行
 			mysql -h 127.0.0.1 -P $$DATABASE_PORT -u $$DATABASE_USER -p$$DATABASE_PASSWORD $$DATABASE_NAME < "./e2e/$$s/02-delete.sql"; \
 			echo "✅ [$$s] のテストが完了しました。"; \
 		done; \
-		if command -v shlack >/dev/null 2>&1; then \
-			if [ $$EXIT_CODE -eq 0 ]; then \
-				shlack channel "Success!"; \
-			else \
-				shlack channel "Failed with!"; \
-			fi; \
-		fi; \
 		exit $$EXIT_CODE; \
 	'

@@ -222,6 +222,7 @@ tasks:
   # Test & Lint Tasks
   # --------------------------------------------------------------------------
   lint:
+    silent: true
     desc: "🔍 golangci-lintを実行してコードを静的解析します"
     prefix: "🔍"
     sources:
@@ -230,6 +231,7 @@ tasks:
     - go tool golangci-lint run ./...
 
   test:unit:
+    silent: true
     desc: "🔬 ユニットテストを実行します"
     summary: "`tenntenn/testtime`を使用して時刻を固定し、ユニットテストを実行します。"
     prefix: "🔬"
@@ -278,7 +280,7 @@ tasks:
         task test:e2e              # 全てのテストを実行
     prefix: "🚀"
     cmds:
-    - defer: shlack channel '{{if .EXIT_CODE}}Failed with!{{else}}Success!{{end}}'
+    # - defer: shlack channel '{{if .EXIT_CODE}}Failed with!{{else}}Success!{{end}}'
     - task: :run-command
       vars:
         COMMAND: test:e2e:single
