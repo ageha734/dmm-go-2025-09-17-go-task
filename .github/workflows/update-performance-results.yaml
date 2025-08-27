@@ -54,8 +54,9 @@ jobs:
     needs: build-and-push-image
 
     permissions:
-      contents: read
+      contents: write
       packages: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
