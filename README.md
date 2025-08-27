@@ -52,13 +52,18 @@ cp .env.example .env
 ```
 
 ```bash
-# 3. データベースとAPIサーバーを起動
-docker compose up -d
-
+# 3. 環境変数をGitHub Secretsに登録
+./scripts/sync_env_to_github_secrets.sh
+```
 
 ```bash
 # 4. 必要なCLIツールをインストール
 task setup
+```
+
+```bash
+# 5. データベースとAPIサーバーを起動
+docker compose up -d
 ```
 
 ### 3. パフォーマンス比較の実行
