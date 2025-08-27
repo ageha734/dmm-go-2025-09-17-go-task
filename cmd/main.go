@@ -91,12 +91,42 @@ func main() {
 
 func initDatabase() (*gorm.DB, error) {
 	dsn := getDSN()
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
+	return connectToDBWithRetry(dsn)
+}
+
+func connectToDBWithRetry(dsn string) (*gorm.DB, error) {
+	maxRetries := getDBMaxRetries()
+	retryInterval := getDBRetryInterval()
+
+	var db *gorm.DB
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		if err == nil {
+			sqlDB, sqlErr := db.DB()
+			if sqlErr == nil {
+				pingErr := sqlDB.Ping()
+				if pingErr == nil {
+					log.Printf("✅ データベースに正常に接続しました！ (試行回数: %d/%d)", i+1, maxRetries)
+					return db, nil
+				}
+				err = pingErr
+			} else {
+				err = sqlErr
+			}
+		}
+
+		log.Printf("❌ データベース接続に失敗しました (試行回数: %d/%d): %v", i+1, maxRetries, err)
+
+		if i < maxRetries-1 {
+			log.Printf("⏳ %v秒後に再試行します...", retryInterval.Seconds())
+			time.Sleep(retryInterval)
+		}
 	}
 
-	return db, nil
+	log.Printf("❌ %d回の試行後もデータベースに接続できませんでした", maxRetries)
+	return nil, err
 }
 
 func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, fraudHandler *handler.FraudHandler, authMiddleware *middleware.AuthMiddleware, rateLimitMiddleware *middleware.RateLimitMiddleware) *gin.Engine {
@@ -284,4 +314,28 @@ func getLoginRateLimit() int64 {
 		return 50
 	}
 	return val
+}
+
+func getDBMaxRetries() int {
+	retries := os.Getenv("DB_MAX_RETRIES")
+	if retries == "" {
+		return 10
+	}
+	val, err := strconv.Atoi(retries)
+	if err != nil {
+		return 10
+	}
+	return val
+}
+
+func getDBRetryInterval() time.Duration {
+	interval := os.Getenv("DB_RETRY_INTERVAL_SECONDS")
+	if interval == "" {
+		return 5 * time.Second
+	}
+	val, err := strconv.Atoi(interval)
+	if err != nil {
+		return 5 * time.Second
+	}
+	return time.Duration(val) * time.Second
 }

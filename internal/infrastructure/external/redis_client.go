@@ -3,6 +3,9 @@ package external
 import (
 	"context"
 	"encoding/json"
+	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -13,15 +16,76 @@ type RedisClient struct {
 }
 
 func NewRedisClient(addr, password string, db int) *RedisClient {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
-	})
+	return NewRedisClientWithRetry(addr, password, db)
+}
 
+func NewRedisClientWithRetry(addr, password string, db int) *RedisClient {
+	maxRetries := getRedisMaxRetries()
+	retryInterval := getRedisRetryInterval()
+
+	var rdb *redis.Client
+	var err error
+
+	for i := 0; i < maxRetries; i++ {
+		rdb = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+			DB:       db,
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err = rdb.Ping(ctx).Err()
+		cancel()
+
+		if err == nil {
+			log.Printf("✅ Redisに正常に接続しました！ (試行回数: %d/%d)", i+1, maxRetries)
+			return &RedisClient{
+				client: rdb,
+			}
+		}
+
+		log.Printf("❌ Redis接続に失敗しました (試行回数: %d/%d): %v", i+1, maxRetries, err)
+
+		if rdb != nil {
+			if closeErr := rdb.Close(); closeErr != nil {
+				log.Printf("⚠️ Redis接続のクローズに失敗しました: %v", closeErr)
+			}
+		}
+
+		if i < maxRetries-1 {
+			log.Printf("⏳ %v秒後に再試行します...", retryInterval.Seconds())
+			time.Sleep(retryInterval)
+		}
+	}
+
+	log.Printf("❌ %d回の試行後もRedisに接続できませんでした", maxRetries)
 	return &RedisClient{
 		client: rdb,
 	}
+}
+
+func getRedisMaxRetries() int {
+	retries := os.Getenv("REDIS_MAX_RETRIES")
+	if retries == "" {
+		return 10
+	}
+	val, err := strconv.Atoi(retries)
+	if err != nil {
+		return 10
+	}
+	return val
+}
+
+func getRedisRetryInterval() time.Duration {
+	interval := os.Getenv("REDIS_RETRY_INTERVAL_SECONDS")
+	if interval == "" {
+		return 5 * time.Second
+	}
+	val, err := strconv.Atoi(interval)
+	if err != nil {
+		return 5 * time.Second
+	}
+	return time.Duration(val) * time.Second
 }
 
 func (r *RedisClient) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
