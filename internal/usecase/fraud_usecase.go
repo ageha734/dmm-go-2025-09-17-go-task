@@ -13,12 +13,12 @@ import (
 )
 
 type FraudUsecase struct {
-	fraudDomainService *service.FraudDomainService
+	fraudDomainService service.FraudDomainServiceInterface
 	allowPrivateIPs    bool
 	allowedPrivateIPs  map[string]bool
 }
 
-func NewFraudUsecase(fraudDomainService *service.FraudDomainService) FraudUsecaseInterface {
+func NewFraudUsecase(fraudDomainService service.FraudDomainServiceInterface) FraudUsecaseInterface {
 	return &FraudUsecase{
 		fraudDomainService: fraudDomainService,
 		allowPrivateIPs:    true,
@@ -366,11 +366,12 @@ func (u *FraudUsecase) validateRateLimitRuleType(ruleType string) error {
 }
 
 func (u *FraudUsecase) validateRateLimitRuleIdentifier(ruleType, identifier string) error {
-	if ruleType == "IP" {
+	switch ruleType {
+	case "IP":
 		if err := u.validateIPAddress(identifier); err != nil {
 			return fmt.Errorf("invalid IP identifier: %w", err)
 		}
-	} else if ruleType == "USER" {
+	case "USER":
 		if matched, _ := regexp.MatchString(`^\d+$`, identifier); !matched {
 			return fmt.Errorf("user identifier must be numeric")
 		}

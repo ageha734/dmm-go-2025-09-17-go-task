@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,10 +40,14 @@ func generateRequestID() string {
 }
 
 func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[len(charset)/2]
+	bytes := make([]byte, length/2)
+	if _, err := rand.Read(bytes); err != nil {
+		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		b := make([]byte, length)
+		for i := range b {
+			b[i] = charset[i%len(charset)]
+		}
+		return string(b)
 	}
-	return string(b)
+	return hex.EncodeToString(bytes)
 }

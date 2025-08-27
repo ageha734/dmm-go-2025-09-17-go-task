@@ -163,7 +163,7 @@ func (s *FraudDomainService) CreateRateLimitRule(ctx context.Context, name, patt
 	return s.rateLimitRuleRepo.Create(ctx, rule)
 }
 
-func (s *FraudDomainService) UpdateRateLimitRule(ctx context.Context, ruleID uint, name, pattern string, maxRequests, windowSize int64) error {
+func (s *FraudDomainService) UpdateRateLimitRule(ctx context.Context, ruleID uint, _, _ string, maxRequests, windowSize int64) error {
 	rule, err := s.rateLimitRuleRepo.GetByID(ctx, ruleID)
 	if err != nil {
 		return fmt.Errorf("failed to get rate limit rule: %w", err)
@@ -296,13 +296,26 @@ func (s *FraudDomainService) createNewDeviceInfo(attempt *entity.LoginAttempt, f
 
 func (s *FraudDomainService) updateExistingDeviceInfo(device map[string]interface{}, attempt *entity.LoginAttempt) {
 	device["last_seen"] = attempt.CreatedAt
-	device["login_count"] = device["login_count"].(int) + 1
+
+	loginCount, ok := device["login_count"].(int)
+	if !ok {
+		loginCount = 0
+	}
+	device["login_count"] = loginCount + 1
 
 	if attempt.Success {
-		device["success_count"] = device["success_count"].(int) + 1
+		successCount, ok := device["success_count"].(int)
+		if !ok {
+			successCount = 0
+		}
+		device["success_count"] = successCount + 1
 	}
 
-	device["risk_level"] = s.calculateRiskLevel(device["success_count"].(int), device["login_count"].(int))
+	successCount, ok := device["success_count"].(int)
+	if !ok {
+		successCount = 0
+	}
+	device["risk_level"] = s.calculateRiskLevel(successCount, loginCount+1)
 }
 
 func (s *FraudDomainService) calculateRiskLevel(successCount, loginCount int) string {

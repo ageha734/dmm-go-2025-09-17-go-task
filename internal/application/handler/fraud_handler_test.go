@@ -1,4 +1,4 @@
-package handler
+package handler_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/dto"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -31,12 +32,26 @@ func (m *MockFraudUsecase) RemoveIPFromBlacklist(ctx context.Context, ip string)
 
 func (m *MockFraudUsecase) GetBlacklistedIPs(ctx context.Context) ([]*entity.IPBlacklist, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*entity.IPBlacklist), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, ok := args.Get(0).([]*entity.IPBlacklist)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudUsecase) GetSecurityEvents(ctx context.Context, limit, offset int) ([]*entity.SecurityEvent, error) {
 	args := m.Called(ctx, limit, offset)
-	return args.Get(0).([]*entity.SecurityEvent), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, ok := args.Get(0).([]*entity.SecurityEvent)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudUsecase) CreateSecurityEvent(ctx context.Context, req *dto.CreateSecurityEventRequest) error {
@@ -61,12 +76,26 @@ func (m *MockFraudUsecase) DeleteRateLimitRule(ctx context.Context, id uint) err
 
 func (m *MockFraudUsecase) GetRateLimitRules(ctx context.Context) ([]*entity.RateLimitRule, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*entity.RateLimitRule), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, ok := args.Get(0).([]*entity.RateLimitRule)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudUsecase) GetActiveSessions(ctx context.Context) ([]*entity.UserSession, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*entity.UserSession), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, ok := args.Get(0).([]*entity.UserSession)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudUsecase) DeactivateSession(ctx context.Context, sessionID string) error {
@@ -76,7 +105,14 @@ func (m *MockFraudUsecase) DeactivateSession(ctx context.Context, sessionID stri
 
 func (m *MockFraudUsecase) GetDevices(ctx context.Context) ([]*entity.DeviceFingerprint, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*entity.DeviceFingerprint), args.Error(1)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, ok := args.Get(0).([]*entity.DeviceFingerprint)
+	if !ok {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudUsecase) TrustDevice(ctx context.Context, fingerprint string) error {
@@ -150,7 +186,7 @@ func TestFraudHandlerAddIPToBlacklist(t *testing.T) {
 			mockUsecase := new(MockFraudUsecase)
 			tt.setupMock(mockUsecase)
 
-			handler := NewFraudHandler(mockUsecase)
+			fraudHandler := handler.NewFraudHandler(mockUsecase)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
@@ -161,7 +197,7 @@ func TestFraudHandlerAddIPToBlacklist(t *testing.T) {
 
 			tt.setupContext(c)
 
-			handler.AddIPToBlacklist(c)
+			fraudHandler.AddIPToBlacklist(c)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
 
@@ -218,7 +254,7 @@ func TestFraudHandlerCreateSecurityEvent(t *testing.T) {
 			mockUsecase := new(MockFraudUsecase)
 			tt.setupMock(mockUsecase)
 
-			handler := NewFraudHandler(mockUsecase)
+			fraudHandler := handler.NewFraudHandler(mockUsecase)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
@@ -227,7 +263,7 @@ func TestFraudHandlerCreateSecurityEvent(t *testing.T) {
 			c.Request = httptest.NewRequest("POST", "/fraud/security/events", bytes.NewBuffer(jsonBody))
 			c.Request.Header.Set("Content-Type", "application/json")
 
-			handler.CreateSecurityEvent(c)
+			fraudHandler.CreateSecurityEvent(c)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
 
@@ -254,13 +290,13 @@ func TestFraudHandlerGetBlacklistedIPs(t *testing.T) {
 
 	mockUsecase.On("GetBlacklistedIPs", mock.Anything).Return(expectedIPs, nil)
 
-	handler := NewFraudHandler(mockUsecase)
+	fraudHandler := handler.NewFraudHandler(mockUsecase)
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = httptest.NewRequest("GET", "/fraud/blacklist/ips", nil)
 
-	handler.GetBlacklistedIPs(c)
+	fraudHandler.GetBlacklistedIPs(c)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
@@ -310,7 +346,7 @@ func TestFraudHandlerCleanupExpiredData(t *testing.T) {
 			mockUsecase := new(MockFraudUsecase)
 			tt.setupMock(mockUsecase)
 
-			handler := NewFraudHandler(mockUsecase)
+			fraudHandler := handler.NewFraudHandler(mockUsecase)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
@@ -318,7 +354,7 @@ func TestFraudHandlerCleanupExpiredData(t *testing.T) {
 
 			tt.setupContext(c)
 
-			handler.CleanupExpiredData(c)
+			fraudHandler.CleanupExpiredData(c)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
 

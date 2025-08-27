@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
@@ -193,91 +191,6 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	}
 
 	return router
-}
-
-func authMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(401, gin.H{"error": "Authorization header required"})
-			c.Abort()
-			return
-		}
-
-		tokenParts := strings.Split(authHeader, " ")
-		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-			c.JSON(401, gin.H{"error": "Invalid authorization header format"})
-			c.Abort()
-			return
-		}
-
-		token := tokenParts[1]
-		jwtSecret := getJWTSecret()
-
-		claims, err := validateJWTToken(token, jwtSecret)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		c.Set("user_id", claims.UserID)
-		c.Set("user_email", claims.Email)
-		c.Set("user_roles", claims.Roles)
-		c.Next()
-	}
-}
-
-func adminMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		roles, exists := c.Get("user_roles")
-		if !exists {
-			c.JSON(403, gin.H{"error": "Access denied"})
-			c.Abort()
-			return
-		}
-
-		roleSlice, ok := roles.([]string)
-		if !ok {
-			c.JSON(403, gin.H{"error": "Access denied"})
-			c.Abort()
-			return
-		}
-
-		hasAdminRole := false
-		for _, role := range roleSlice {
-			if role == "admin" {
-				hasAdminRole = true
-				break
-			}
-		}
-
-		if !hasAdminRole {
-			c.JSON(403, gin.H{"error": "Access denied"})
-			c.Abort()
-			return
-		}
-
-		c.Next()
-	}
-}
-
-func validateJWTToken(tokenString, jwtSecret string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(jwtSecret), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*JWTClaims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, fmt.Errorf("invalid token")
 }
 
 type JWTClaims struct {

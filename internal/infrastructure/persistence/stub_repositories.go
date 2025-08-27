@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"context"
-	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/repository"
@@ -105,122 +104,6 @@ func (r *userMembershipRepository) List(ctx context.Context, offset, limit int) 
 
 	return memberships, total, nil
 }
-
-type securityEventRepository struct {
-	db *gorm.DB
-}
-
-func NewSecurityEventRepository(db *gorm.DB) repository.SecurityEventRepository {
-	return &securityEventRepository{db: db}
-}
-
-func (r *securityEventRepository) Create(ctx context.Context, event *entity.SecurityEvent) error {
-	gormEvent := SecurityEventEntityToGorm(event)
-	if err := r.db.WithContext(ctx).Create(gormEvent).Error; err != nil {
-		return err
-	}
-	event.ID = gormEvent.ID
-	return nil
-}
-
-func (r *securityEventRepository) GetByID(ctx context.Context, id uint) (*entity.SecurityEvent, error) {
-	var gormEvent GormSecurityEvent
-	if err := r.db.WithContext(ctx).First(&gormEvent, id).Error; err != nil {
-		return nil, err
-	}
-	return SecurityEventGormToEntity(&gormEvent), nil
-}
-
-func (r *securityEventRepository) List(ctx context.Context, offset, limit int) ([]*entity.SecurityEvent, int64, error) {
-	var gormEvents []GormSecurityEvent
-	var total int64
-
-	if err := r.db.WithContext(ctx).Model(&GormSecurityEvent{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	if err := r.db.WithContext(ctx).Offset(offset).Limit(limit).Find(&gormEvents).Error; err != nil {
-		return nil, 0, err
-	}
-
-	events := make([]*entity.SecurityEvent, len(gormEvents))
-	for i, gormEvent := range gormEvents {
-		events[i] = SecurityEventGormToEntity(&gormEvent)
-	}
-
-	return events, total, nil
-}
-
-func (r *securityEventRepository) GetByUserID(ctx context.Context, userID uint, offset, limit int) ([]*entity.SecurityEvent, int64, error) {
-	return r.List(ctx, offset, limit)
-}
-
-func (r *securityEventRepository) GetBySeverity(ctx context.Context, severity string, offset, limit int) ([]*entity.SecurityEvent, int64, error) {
-	return r.List(ctx, offset, limit)
-}
-
-func (r *securityEventRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&GormSecurityEvent{}, id).Error
-}
-
-type ipBlacklistRepository struct {
-	db *gorm.DB
-}
-
-func NewIPBlacklistRepository(db *gorm.DB) repository.IPBlacklistRepository {
-	return &ipBlacklistRepository{db: db}
-}
-
-func (r *ipBlacklistRepository) Create(ctx context.Context, blacklist *entity.IPBlacklist) error {
-	return nil
-}
-
-func (r *ipBlacklistRepository) GetByIP(ctx context.Context, ipAddress string) (*entity.IPBlacklist, error) {
-	return nil, gorm.ErrRecordNotFound
-}
-
-func (r *ipBlacklistRepository) List(ctx context.Context, offset, limit int) ([]*entity.IPBlacklist, int64, error) {
-	return nil, 0, nil
-}
-
-func (r *ipBlacklistRepository) Update(ctx context.Context, blacklist *entity.IPBlacklist) error {
-	return nil
-}
-func (r *ipBlacklistRepository) Delete(ctx context.Context, ipAddress string) error { return nil }
-func (r *ipBlacklistRepository) IsBlacklisted(ctx context.Context, ipAddress string) (bool, error) {
-	return false, nil
-}
-func (r *ipBlacklistRepository) CleanupExpired(ctx context.Context) error { return nil }
-
-type loginAttemptRepository struct {
-	db *gorm.DB
-}
-
-func NewLoginAttemptRepository(db *gorm.DB) repository.LoginAttemptRepository {
-	return &loginAttemptRepository{db: db}
-}
-
-func (r *loginAttemptRepository) Create(ctx context.Context, attempt *entity.LoginAttempt) error {
-	return nil
-}
-
-func (r *loginAttemptRepository) GetByEmail(ctx context.Context, email string, since time.Time) ([]*entity.LoginAttempt, error) {
-	return nil, nil
-}
-
-func (r *loginAttemptRepository) GetByIP(ctx context.Context, ipAddress string, since time.Time) ([]*entity.LoginAttempt, error) {
-	return nil, nil
-}
-
-func (r *loginAttemptRepository) CountFailedAttempts(ctx context.Context, email string, since time.Time) (int64, error) {
-	return 0, nil
-}
-
-func (r *loginAttemptRepository) List(ctx context.Context, offset, limit int) ([]*entity.LoginAttempt, int64, error) {
-	return nil, 0, nil
-}
-func (r *loginAttemptRepository) Delete(ctx context.Context, id uint) error              { return nil }
-func (r *loginAttemptRepository) CleanupOld(ctx context.Context, before time.Time) error { return nil }
 
 type rateLimitRuleRepository struct {
 	db *gorm.DB

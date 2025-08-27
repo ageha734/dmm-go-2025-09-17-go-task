@@ -21,6 +21,14 @@ func NewRateLimitMiddleware(cacheService *external.CacheService) *RateLimitMiddl
 
 func (m *RateLimitMiddleware) RateLimitByIP(maxRequests int64, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if m.cacheService == nil {
+			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(window).Unix()))
+			c.Next()
+			return
+		}
+
 		ip := c.ClientIP()
 		key := fmt.Sprintf("ip:%s", ip)
 
@@ -59,6 +67,14 @@ func (m *RateLimitMiddleware) RateLimitByIP(maxRequests int64, window time.Durat
 
 func (m *RateLimitMiddleware) RateLimitByUser(maxRequests int64, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if m.cacheService == nil {
+			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(window).Unix()))
+			c.Next()
+			return
+		}
+
 		userID, exists := c.Get("user_id")
 		if !exists {
 
@@ -103,6 +119,14 @@ func (m *RateLimitMiddleware) RateLimitByUser(maxRequests int64, window time.Dur
 
 func (m *RateLimitMiddleware) RateLimitByEndpoint(endpoint string, maxRequests int64, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if m.cacheService == nil {
+			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", maxRequests))
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(window).Unix()))
+			c.Next()
+			return
+		}
+
 		ip := c.ClientIP()
 		key := fmt.Sprintf("endpoint:%s:ip:%s", endpoint, ip)
 
@@ -141,6 +165,11 @@ func (m *RateLimitMiddleware) RateLimitByEndpoint(endpoint string, maxRequests i
 
 func (m *RateLimitMiddleware) CheckBlacklist() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if m.cacheService == nil {
+			c.Next()
+			return
+		}
+
 		ip := c.ClientIP()
 
 		blacklisted, err := m.cacheService.IsBlacklisted(c.Request.Context(), ip)
