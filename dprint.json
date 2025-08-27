@@ -1,0 +1,21 @@
+{
+	"typescript": {},
+	"dockerfile": {},
+	"biome": {},
+	"ruff": {},
+	"jupyter": {},
+	"malva": {},
+	"markup": {},
+	"graphql": {},
+	"excludes": ["**/node_modules"],
+	"plugins": [
+		"https://plugins.dprint.dev/typescript-0.95.10.wasm",
+		"https://plugins.dprint.dev/dockerfile-0.3.3.wasm",
+		"https://plugins.dprint.dev/biome-0.10.1.wasm",
+		"https://plugins.dprint.dev/ruff-0.4.8.wasm",
+		"https://plugins.dprint.dev/jupyter-0.2.0.wasm",
+		"https://plugins.dprint.dev/g-plane/malva-v0.14.2.wasm",
+		"https://plugins.dprint.dev/g-plane/markup_fmt-v0.23.3.wasm",
+		"https://plugins.dprint.dev/g-plane/pretty_graphql-v0.2.3.wasm"
+	]
+}
