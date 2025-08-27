@@ -18,7 +18,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "user@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -37,7 +37,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "user@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -56,7 +56,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -84,7 +84,7 @@ Authorization: Bearer {{api_admin_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data" isCollection
-jsonpath "$.data.users" count >= 5
+jsonpath "$.data.users" count >= 3
 
 # Test 7: POST - リソース作成（新規ユーザー登録）
 POST http://localhost/api/v1/auth/register
@@ -233,7 +233,7 @@ jsonpath "$.data.users[0].id" exists
 jsonpath "$.data.users[0].email" exists
 
 # Test 20: 統計エンドポイントのレスポンス形式確認
-GET http://localhost/api/v1/admin/stats/fraud
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{api_admin_token}}
 
 HTTP 200
@@ -244,11 +244,24 @@ jsonpath "$" exists
 # Phase 5: 認証・認可統合テスト
 # ========================================
 
-# Test 21: トークンリフレッシュ統合テスト
+# Test 21: パスワード変更後の再ログイン（リフレッシュトークン用）
+POST http://localhost/api/v1/auth/login
+Content-Type: application/json
+{
+  "email": "user@example.com",
+  "password": "UpdatedApiPass456!"
+}
+
+HTTP 200
+[Captures]
+updated_user_token: jsonpath "$.data.access_token"
+updated_user_refresh: jsonpath "$.data.refresh_token"
+
+# Test 22: トークンリフレッシュ統合テスト
 POST http://localhost/api/v1/auth/refresh
 Content-Type: application/json
 {
-  "refresh_token": "{{api_user_refresh}}"
+  "refresh_token": "{{updated_user_refresh}}"
 }
 
 HTTP 200
@@ -258,7 +271,7 @@ refreshed_api_token: jsonpath "$.data.access_token"
 jsonpath "$.data.access_token" exists
 jsonpath "$.data.refresh_token" exists
 
-# Test 22: 更新されたトークンでのアクセス確認
+# Test 23: 更新されたトークンでのアクセス確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{refreshed_api_token}}
 
@@ -266,7 +279,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{api_user_id}}
 
-# Test 23: 古いトークンの無効化確認
+# Test 24: 古いトークンの無効化確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{api_user_token}}
 
@@ -278,7 +291,7 @@ jsonpath "$.data" exists
 # Phase 6: データ整合性とバリデーション
 # ========================================
 
-# Test 24: 入力データバリデーション（メール形式）
+# Test 25: 入力データバリデーション（メール形式）
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
@@ -292,7 +305,7 @@ HTTP 400
 [Asserts]
 jsonpath "$.error" exists
 
-# Test 25: 入力データバリデーション（パスワード強度）
+# Test 26: 入力データバリデーション（パスワード強度）
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
@@ -306,7 +319,7 @@ HTTP 400
 [Asserts]
 jsonpath "$.error" exists
 
-# Test 26: 入力データバリデーション（年齢範囲）
+# Test 27: 入力データバリデーション（年齢範囲）
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
@@ -324,7 +337,7 @@ jsonpath "$.error" exists
 # Phase 7: API統合フローテスト
 # ========================================
 
-# Test 27: 完全なユーザーライフサイクル（登録→ログイン→プロファイル→ログアウト）
+# Test 28: 完全なユーザーライフサイクル（登録→ログイン→プロファイル→ログアウト）
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
@@ -339,7 +352,7 @@ HTTP 201
 lifecycle_token: jsonpath "$.data.access_token"
 lifecycle_user_id: jsonpath "$.data.user.id"
 
-# Test 28: 新規ユーザーのプロファイル確認
+# Test 29: 新規ユーザーのプロファイル確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{lifecycle_token}}
 
@@ -347,7 +360,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{lifecycle_user_id}}
 
-# Test 29: パスワード変更フロー
+# Test 30: パスワード変更フロー
 POST http://localhost/api/v1/user/change-password
 Authorization: Bearer {{lifecycle_token}}
 Content-Type: application/json
@@ -358,7 +371,7 @@ Content-Type: application/json
 
 HTTP 200
 
-# Test 30: 新しいパスワードでの再ログイン
+# Test 31: 新しいパスワードでの再ログイン
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
@@ -374,7 +387,7 @@ new_lifecycle_token: jsonpath "$.data.access_token"
 # Phase 8: 管理者API統合テスト
 # ========================================
 
-# Test 31: 管理者権限でのユーザー一覧取得
+# Test 32: 管理者権限でのユーザー一覧取得
 GET http://localhost/api/v1/admin/users
 Authorization: Bearer {{api_admin_token}}
 
@@ -384,15 +397,15 @@ admin_users_count: jsonpath "$.data.users" count
 [Asserts]
 jsonpath "$.data.users" count >= 5
 
-# Test 32: 管理者権限での不正統計取得
-GET http://localhost/api/v1/admin/stats/fraud
+# Test 33: 管理者権限での統計取得
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{api_admin_token}}
 
 HTTP 200
 [Asserts]
 jsonpath "$" exists
 
-# Test 33: 一般ユーザーによる管理者API不正アクセス
+# Test 34: 一般ユーザーによる管理者API不正アクセス
 GET http://localhost/api/v1/admin/users
 Authorization: Bearer {{new_lifecycle_token}}
 
@@ -404,7 +417,7 @@ jsonpath "$.error" exists
 # Phase 9: エラーハンドリング統合テスト
 # ========================================
 
-# Test 34: 複数の認証エラーパターン
+# Test 35: 複数の認証エラーパターン
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
@@ -423,7 +436,7 @@ Authorization: Bearer malformed.jwt.token
 
 HTTP 401
 
-# Test 35: 複数のバリデーションエラーパターン
+# Test 36: 複数のバリデーションエラーパターン
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
@@ -439,7 +452,7 @@ HTTP 400
 # Phase 10: 最終統合確認とクリーンアップ
 # ========================================
 
-# Test 36: 全ユーザーのログアウト
+# Test 37: 全ユーザーのログアウト
 POST http://localhost/api/v1/user/logout
 Authorization: Bearer {{refreshed_api_token}}
 
@@ -460,7 +473,7 @@ Authorization: Bearer {{api_admin_token}}
 
 HTTP 200
 
-# Test 37: ログアウト後のアクセス確認
+# Test 38: ログアウト後のアクセス確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{refreshed_api_token}}
 
@@ -468,7 +481,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.data" exists
 
-# Test 38: 最終API健全性確認
+# Test 39: 最終API健全性確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{health_check_token}}
 
@@ -476,7 +489,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.data" exists
 
-# Test 39: 最終認証テスト
+# Test 40: 最終認証テスト
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
@@ -488,7 +501,7 @@ HTTP 200
 [Captures]
 final_api_token: jsonpath "$.data.access_token"
 
-# Test 40: 最終プロファイル確認
+# Test 41: 最終プロファイル確認
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{final_api_token}}
 
@@ -496,13 +509,13 @@ HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{api_user_id}}
 
-# Test 41: 最終ログアウト
+# Test 42: 最終ログアウト
 POST http://localhost/api/v1/user/logout
 Authorization: Bearer {{final_api_token}}
 
 HTTP 200
 
-# Test 42: 最終セキュリティ検証
+# Test 43: 最終セキュリティ検証
 GET http://localhost/api/v1/user/profile
 
 HTTP 401

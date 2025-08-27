@@ -294,7 +294,8 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "testuser1@example.com",
-  "password": "password123"
+  "password": "password123",
+  "age": 25
 }
 
 HTTP 400

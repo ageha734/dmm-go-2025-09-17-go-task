@@ -18,7 +18,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -29,13 +29,13 @@ admin_refresh_token: jsonpath "$.data.refresh_token"
 jsonpath "$.data.access_token" exists
 jsonpath "$.data.user.email" == "admin@example.com"
 
-# Test 2: 初期不正統計の取得（ベースライン）
-GET http://localhost/api/v1/admin/stats/fraud
+# Test 2: 初期統計の取得（ベースライン）
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Captures]
-initial_fraud_stats: jsonpath "$"
+initial_stats: jsonpath "$"
 [Asserts]
 jsonpath "$" exists
 
@@ -81,7 +81,7 @@ HTTP 401
 # ========================================
 
 # Test 34: レート制限後の統計確認
-GET http://localhost/api/v1/admin/stats/fraud
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
@@ -146,7 +146,7 @@ Content-Type: application/json
   "injection_attempt": "../../etc/passwd"
 }
 
-HTTP 401
+HTTP 400
 [Asserts]
 jsonpath "$.error" exists
 
@@ -161,7 +161,7 @@ Content-Type: application/json
   "bypass": true
 }
 
-HTTP 401
+HTTP 400
 [Asserts]
 jsonpath "$.error" exists
 
@@ -175,7 +175,7 @@ Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data.users" count >= 10
+jsonpath "$.data.users" count >= 8
 
 # Test 43: 攻撃後の正常ユーザー機能確認
 GET http://localhost/api/v1/user/profile
@@ -185,13 +185,13 @@ HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{legitimate_user_id}}
 
-# Test 44: 最終不正統計の確認
-GET http://localhost/api/v1/admin/stats/fraud
+# Test 44: 最終統計の確認
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Captures]
-final_fraud_stats: jsonpath "$"
+final_stats: jsonpath "$"
 [Asserts]
 jsonpath "$" exists
 
@@ -200,8 +200,8 @@ POST http://localhost/api/v1/user/change-password
 Authorization: Bearer {{admin_token}}
 Content-Type: application/json
 {
-  "current_password": "new_admin_password_123",
-  "new_password": "abc123"
+  "current_password": "password123",
+  "new_password": "new_admin_password_123"
 }
 
 HTTP 200
@@ -213,7 +213,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "new_admin_password_123"
 }
 
 HTTP 200

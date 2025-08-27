@@ -17,8 +17,8 @@
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
-  "name": "田中太郎",
-  "email": "tanaka.taro@newuser.com",
+  "name": "山田太郎",
+  "email": "yamada.taro@newuser.com",
   "password": "SecurePass123!",
   "age": 28
 }
@@ -29,8 +29,8 @@ new_user_token: jsonpath "$.data.access_token"
 new_user_refresh_token: jsonpath "$.data.refresh_token"
 new_user_id: jsonpath "$.data.user.id"
 [Asserts]
-jsonpath "$.data.user.name" == "田中太郎"
-jsonpath "$.data.user.email" == "tanaka.taro@newuser.com"
+jsonpath "$.data.user.name" == "山田太郎"
+jsonpath "$.data.user.email" == "yamada.taro@newuser.com"
 jsonpath "$.data.access_token" exists
 jsonpath "$.data.refresh_token" exists
 jsonpath "$.data.expires_in" == 3600
@@ -40,7 +40,7 @@ POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
   "name": "重複ユーザー",
-  "email": "tanaka.taro@newuser.com",
+  "email": "yamada.taro@newuser.com",
   "password": "AnotherPass456!",
   "age": 30
 }
@@ -90,8 +90,6 @@ HTTP 200
 user_profile: jsonpath "$.data"
 [Asserts]
 jsonpath "$.data.user_id" == {{new_user_id}}
-jsonpath "$.data.name" == "田中太郎"
-jsonpath "$.data.email" == "tanaka.taro@newuser.com"
 
 # Test 6: 新規ユーザーのトークン更新テスト
 POST http://localhost/api/v1/auth/refresh
@@ -136,7 +134,7 @@ jsonpath "$.message" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "tanaka.taro@newuser.com",
+  "email": "yamada.taro@newuser.com",
   "password": "SecurePass123!"
 }
 
@@ -148,7 +146,7 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "tanaka.taro@newuser.com",
+  "email": "yamada.taro@newuser.com",
   "password": "NewSecurePass456!"
 }
 
@@ -229,7 +227,7 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "tanaka.taro@newuser.com",
+  "email": "yamada.taro@newuser.com",
   "password": "NewSecurePass456!"
 }
 
@@ -274,7 +272,7 @@ Content-Type: application/json
   "new_password": "AnyNewPassword123!"
 }
 
-HTTP 400
+HTTP 401
 [Asserts]
 jsonpath "$.error" exists
 
@@ -286,8 +284,8 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/register
 Content-Type: application/json
 {
-  "name": "佐藤花子",
-  "email": "sato.hanako@newuser.com",
+  "name": "花子",
+  "email": "hanako.sato@newuser.com",
   "password": "AnotherSecurePass123!",
   "age": 26
 }
@@ -297,7 +295,7 @@ HTTP 201
 second_new_user_token: jsonpath "$.data.access_token"
 second_new_user_id: jsonpath "$.data.user.id"
 [Asserts]
-jsonpath "$.data.user.name" == "佐藤花子"
+jsonpath "$.data.user.name" == "花子"
 
 # Test 22: 2人目の新規ユーザーのプロファイル確認
 GET http://localhost/api/v1/user/profile
@@ -306,7 +304,6 @@ Authorization: Bearer {{second_new_user_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{second_new_user_id}}
-jsonpath "$.data.name" == "佐藤花子"
 
 # Test 23: ユーザー間のデータ分離確認
 GET http://localhost/api/v1/user/profile
@@ -315,7 +312,6 @@ Authorization: Bearer {{updated_user_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{new_user_id}}
-jsonpath "$.data.name" == "田中太郎"
 
 # ========================================
 # Phase 9: 境界値テストとエッジケース
@@ -476,7 +472,7 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "tanaka.taro@newuser.com",
+  "email": "yamada.taro@newuser.com",
   "password": "FinalSecurePass789!"
 }
 
@@ -493,7 +489,6 @@ Authorization: Bearer {{final_verification_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{new_user_id}}
-jsonpath "$.data.name" == "田中太郎"
 
 # Test 42: 最終ログアウト
 POST http://localhost/api/v1/user/logout

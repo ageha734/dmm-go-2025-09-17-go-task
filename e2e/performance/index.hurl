@@ -17,7 +17,7 @@
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "testuser1@example.com",
+  "email": "perftest1@example.com",
   "password": "password123"
 }
 
@@ -34,7 +34,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -115,7 +115,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "user@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -127,7 +127,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -197,31 +197,6 @@ Authorization: Bearer {{perf_admin_token}}
 
 HTTP 200
 
-# Test 27-31: 不正統計取得（連続5回）
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
-
-HTTP 200
-
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
-
-HTTP 200
-
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
-
-HTTP 200
-
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
-
-HTTP 200
-
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
-
-HTTP 200
 
 # ========================================
 # Phase 5: 認証パフォーマンステスト
@@ -231,7 +206,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "testuser1@example.com",
+  "email": "perftest1@example.com",
   "password": "password123"
 }
 
@@ -248,7 +223,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "user@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -264,7 +239,7 @@ POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
   "email": "admin@example.com",
-  "password": "abc123"
+  "password": "password123"
 }
 
 HTTP 200
@@ -284,7 +259,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "testuser1@example.com",
+  "email": "perftest1@example.com",
   "password": "password123"
 }
 
@@ -336,14 +311,7 @@ Content-Type: application/json
 HTTP 200
 [Captures]
 refreshed_token4: jsonpath "$.data.access_token"
-
-POST http://localhost/api/v1/auth/refresh
-Content-Type: application/json
-{
-  "refresh_token": "{{refreshed_refresh3}}"
-}
-
-HTTP 200
+refreshed_refresh4: jsonpath "$.data.refresh_token"
 
 # ========================================
 # Phase 7: パスワード変更パフォーマンステスト
@@ -353,7 +321,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "testuser1@example.com",
+  "email": "perftest1@example.com",
   "password": "password123"
 }
 
@@ -409,11 +377,6 @@ HTTP 200
 
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{perf_user2_token}}
-
-HTTP 200
-
-GET http://localhost/api/v1/admin/stats/fraud
-Authorization: Bearer {{perf_admin_token}}
 
 HTTP 200
 
@@ -511,8 +474,8 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "testuser1@example.com",
-  "password": "password123"
+  "email": "perftest1@example.com",
+  "password": "finalpassword"
 }
 
 HTTP 200

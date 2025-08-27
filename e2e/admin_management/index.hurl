@@ -70,13 +70,13 @@ jsonpath "$.error" exists
 # Phase 2: 不正行為監視と統計分析
 # ========================================
 
-# Test 5: 不正統計の詳細分析
-GET http://localhost/api/v1/admin/stats/fraud
+# Test 5: 統計の詳細分析
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Captures]
-fraud_stats: jsonpath "$"
+stats: jsonpath "$"
 [Asserts]
 jsonpath "$" exists
 
@@ -109,7 +109,7 @@ Content-Type: application/json
 HTTP 401
 
 # Test 7: 不正試行後の統計更新確認
-GET http://localhost/api/v1/admin/stats/fraud
+GET http://localhost/api/v1/stats
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
@@ -301,7 +301,7 @@ Content-Type: application/json
   "password": ""
 }
 
-HTTP 401
+HTTP 400
 [Asserts]
 jsonpath "$.error" exists
 

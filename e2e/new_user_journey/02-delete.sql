@@ -31,20 +31,20 @@ DELETE FROM point_transactions WHERE user_id IN (SELECT id FROM users WHERE emai
 DELETE FROM login_attempts WHERE email = 'admin@example.com';
 
 -- Delete child records for new users
-DELETE FROM user_sessions WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM user_preferences WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM user_activities WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM point_transactions WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM login_attempts WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com');
+DELETE FROM user_sessions WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM user_preferences WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM user_activities WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM point_transactions WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM login_attempts WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com');
 
 -- Delete user memberships for all users (must be deleted before membership_tiers)
-DELETE FROM user_memberships WHERE user_id IN (SELECT id FROM users WHERE email IN ('admin@example.com', 'newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
-DELETE FROM user_profiles WHERE user_id IN (SELECT id FROM users WHERE email IN ('newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com'));
+DELETE FROM user_memberships WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
+DELETE FROM user_profiles WHERE user_id IN (SELECT id FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com'));
 
 -- Now delete parent records
-DELETE FROM auths WHERE email IN ('admin@example.com', 'newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com');
-DELETE FROM users WHERE email IN ('admin@example.com', 'newuser1@example.com', 'newuser2@example.com', 'newuser3@example.com');
+DELETE FROM auths WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com');
+DELETE FROM users WHERE email IN ('yamada.taro@newuser.com', 'hanako.sato@newuser.com', 'young.user@example.com', 'senior.user@example.com', 'long.name@example.com');
 
 -- Note: membership_tiers are shared across tests, so we don't delete them
 -- DELETE FROM membership_tiers WHERE id IN (1, 2, 3, 4);
