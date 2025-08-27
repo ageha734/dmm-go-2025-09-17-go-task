@@ -150,9 +150,57 @@ jobs:
         run: |
           rm -f comparison_output.txt performance_summary.md
 
-  # 複数環境での比較
-  multi-platform-comparison:
+  build-and-push-image:
     if: github.event.inputs.comparison_type == 'all' || github.event_name == 'schedule'
+
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.tag }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Generate image tag
+      id: image-tag
+      run: |
+        TAG="e2e-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA::8}"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Generated tag: $TAG"
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:${{ steps.image-tag.outputs.tag }}
+          ghcr.io/${{ github.repository }}:latest
+
+  multi-platform-comparison:
+    needs: build-and-push-image
+
+    if: github.event.inputs.comparison_type == 'all' || github.event_name == 'schedule'
+    name: Multi-Platform Comparison
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -194,6 +242,17 @@ jobs:
         run: |
           cp .env.template .env
           go run scripts/generate-jwt-secret/main.go -update-env
+
+      - name: Update compose.yml with registry image
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
+          sed -i "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
+          echo "Updated compose.yml to use image: $IMAGE_NAME"
+
+      - name: Setup Docker Services
+        uses: ./.github/actions/setup-docker-services
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Make scripts executable
         run: |
