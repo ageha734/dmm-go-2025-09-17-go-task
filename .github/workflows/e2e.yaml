@@ -15,9 +15,11 @@ jobs:
   build-and-push-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
 
@@ -52,6 +54,11 @@ jobs:
     name: E2E Test - Raw Commands
     runs-on: ubuntu-latest
     needs: build-and-push-image
+
+    permissions:
+      contents: read
+      packages: read
+
 
     steps:
     - name: Checkout code
@@ -127,7 +134,7 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: docker compose down -v
+      run: docker compose down -v --remove-orphans
 
     - name: Save execution time
       run: echo "raw_commands,${{ env.RAW_COMMANDS_TIME }}" > raw_commands_time.csv
@@ -142,6 +149,10 @@ jobs:
     name: E2E Test - Make
     runs-on: ubuntu-latest
     needs: build-and-push-image
+
+    permissions:
+      contents: read
+      packages: read
 
     steps:
     - name: Checkout code
@@ -176,7 +187,7 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: docker compose down -v
+      run: docker compose down -v --remove-orphans
 
     - name: Save execution time
       run: echo "make,${{ env.MAKE_TIME }}" > make_time.csv
@@ -191,6 +202,10 @@ jobs:
     name: E2E Test - Task
     runs-on: ubuntu-latest
     needs: build-and-push-image
+
+    permissions:
+      contents: read
+      packages: read
 
     steps:
     - name: Checkout code
@@ -228,7 +243,7 @@ jobs:
 
     - name: Cleanup
       if: always()
-      run: docker compose down -v
+      run: docker compose down -v --remove-orphans
 
     - name: Save execution time
       run: echo "task,${{ env.TASK_TIME }}" > task_time.csv

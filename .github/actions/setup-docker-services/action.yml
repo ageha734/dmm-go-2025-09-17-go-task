@@ -1,41 +1,59 @@
+# .github/actions/setup-docker-services/action.yml
+
 name: 'Setup Docker Services'
-description: 'Build and start Docker services for E2E testing'
+description: 'Build, cache, and start Docker services for E2E testing'
+
+# アクションの再利用性を高めるための入力パラメータ
+inputs:
+  compose-file:
+    description: 'Path to the docker-compose file'
+    required: false
+    default: 'compose.yml'
+  health-check-url:
+    description: 'URL for the health check endpoint'
+    required: false
+    default: 'http://localhost/health'
 
 runs:
   using: 'composite'
   steps:
-    - name: Build Docker images
-      shell: bash
-      run: |
-        docker compose build mysql redis api nginx
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Start services
+    - name: Build and start services
       shell: bash
       run: |
-        docker compose up -d mysql redis api nginx
+        docker compose -f ${{ inputs.compose-file }} up -d --build mysql redis api nginx
 
     - name: Wait for services to be ready
       shell: bash
       run: |
-        echo "Waiting for services to be ready..."
-        sleep 30
+        echo "Waiting for API service to be ready..."
+        # サービスの起動に時間がかかる場合があるため、最初の待機時間を設ける
+        sleep 15
 
         max_attempts=30
         attempt=1
 
         while [ $attempt -le $max_attempts ]; do
-          if curl -f http://localhost/health > /dev/null 2>&1; then
-            echo "API is ready!"
-            break
+          # -s: サイレント, -f: エラー時に失敗, -o /dev/null: 出力破棄
+          if curl -s -f -o /dev/null ${{ inputs.health-check-url }}; then
+            echo "✅ API is ready!"
+            exit 0
           fi
 
           if [ $attempt -eq $max_attempts ]; then
-            echo "API failed to start within timeout"
-            docker compose logs api
+            echo "❌ API failed to start within timeout."
+            # 失敗時はデバッグ用にログを出力
+            docker compose -f ${{ inputs.compose-file }} logs api
             exit 1
           fi
 
-          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting..."
+          echo "Attempt $attempt/$max_attempts - API not ready yet, waiting 2 seconds..."
           sleep 2
           attempt=$((attempt + 1))
         done
