@@ -146,6 +146,7 @@ mod: ## Goモジュールの依存関係を整理・ダウンロード
 	@go mod download
 
 build: mod $(TARGET_APP) ## アプリケーションをビルド
+	@echo "✅ ビルドが完了しました。"
 
 $(TARGET_APP): $(GO_FILES) go.mod go.sum
 	@echo "🔨 アプリケーションをビルドします..."
@@ -167,7 +168,7 @@ lint: ## golangci-lintを実行
 	@echo "🔍 golangci-lintを実行します..."
 	@go tool golangci-lint run ./...
 
-test-unit: ## ユニットテストを実行
+test-unit: mod ## ユニットテストを実行
 	@echo "🔬 ユニットテストを実行します..."
 	@TEST=true go test ./... -overlay=$(shell go run github.com/tenntenn/testtime/cmd/testtime@latest)
 

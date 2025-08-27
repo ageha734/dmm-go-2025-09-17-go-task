@@ -47,6 +47,20 @@ jobs:
       - name: Run Raw Command with time
         run: |
           echo "========================================="
+          echo "⏱️ Running Raw Command: go mod tidy"
+          echo "========================================="
+          time go mod tidy
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
+          echo "⏱️ Running Raw Command: go mod download"
+          echo "========================================="
+          time go mod download
+
+      - name: Run Raw Command with time
+        run: |
+          echo "========================================="
           echo "⏱️ Running Raw Command: go build"
           echo "========================================="
           time go build -o ./.target/app ./cmd/main.go
