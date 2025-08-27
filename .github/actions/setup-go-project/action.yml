@@ -23,6 +23,3 @@ runs:
     - name: Install dependencies
       shell: bash
       run: go mod download
-
-    - name: Setup environment variables
-      uses: ./.github/actions/setup-env

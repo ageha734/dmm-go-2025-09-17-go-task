@@ -13,6 +13,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup environment variables
+      uses: ./.github/actions/setup-env
+
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
 
@@ -96,6 +99,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Setup environment variables
+      uses: ./.github/actions/setup-env
+
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
 
@@ -137,6 +143,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Setup environment variables
+      uses: ./.github/actions/setup-env
 
     - name: Setup Go Project
       uses: ./.github/actions/setup-go-project
