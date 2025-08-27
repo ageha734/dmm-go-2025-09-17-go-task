@@ -1,0 +1,215 @@
+name: Comprehensive Make vs Task Comparison
+
+on:
+  schedule:
+    # 毎週月曜日 09:00 JST (00:00 UTC)
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # 手動実行も可能
+    inputs:
+      comparison_type:
+        description: '比較タイプを選択'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - performance
+        - complexity
+        - memory
+      generate_report:
+        description: '詳細レポートを生成'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  comprehensive-comparison:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc make time
+
+      - name: Set up environment
+        run: |
+          cp .env.template .env
+          go run scripts/generate-jwt-secret/main.go -update-env
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/*.sh
+
+      - name: Run comprehensive comparison
+        id: comparison
+        run: |
+          COMPARISON_TYPE="${{ github.event.inputs.comparison_type || 'all' }}"
+          GENERATE_REPORT="${{ github.event.inputs.generate_report || 'true' }}"
+
+          echo "Running comprehensive comparison with type: $COMPARISON_TYPE"
+
+          # 比較実行
+          if [ "$GENERATE_REPORT" = "true" ]; then
+            ./scripts/comprehensive_comparison.sh --$COMPARISON_TYPE --report > comparison_output.txt 2>&1 || true
+          else
+            ./scripts/comprehensive_comparison.sh --$COMPARISON_TYPE > comparison_output.txt 2>&1 || true
+          fi
+
+          # 結果をGitHub Actionsの出力に設定
+          if [ -f comparison_output.txt ]; then
+            echo "comparison_completed=true" >> $GITHUB_OUTPUT
+
+            # レポートファイルが生成されたかチェック
+            REPORT_FILE=$(ls performance_comparison_report_*.md 2>/dev/null | head -1 || echo "")
+            if [ -n "$REPORT_FILE" ]; then
+              echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "comparison_completed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display comparison results
+        if: steps.comparison.outputs.comparison_completed == 'true'
+        run: |
+          echo "=== 比較結果 ==="
+          cat comparison_output.txt
+
+      - name: Upload comparison report
+        if: steps.comparison.outputs.report_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-comparison-report-${{ github.run_number }}
+          path: ${{ steps.comparison.outputs.report_file }}
+          retention-days: 30
+
+      - name: Create performance summary
+        if: steps.comparison.outputs.comparison_completed == 'true'
+        run: |
+          # パフォーマンス結果のサマリーを作成
+          cat > performance_summary.md << 'EOF'
+          # Make vs Task パフォーマンス比較サマリー
+
+          **実行日時:** $(date '+%Y年%m月%d日 %H:%M:%S UTC')
+          **ワークフロー実行:** ${{ github.run_number }}
+
+          ## 実行環境
+          - **OS:** Ubuntu Latest (GitHub Actions)
+          - **Go バージョン:** 1.24
+          - **比較タイプ:** ${{ github.event.inputs.comparison_type || 'all' }}
+
+          ## 結果
+
+          ```
+          $(cat comparison_output.txt | tail -50)
+          ```
+
+          詳細なレポートは Artifacts からダウンロードできます。
+          EOF
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request' && steps.comparison.outputs.comparison_completed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (fs.existsSync('performance_summary.md')) {
+              const summary = fs.readFileSync('performance_summary.md', 'utf8');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            }
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -f comparison_output.txt performance_summary.md
+
+  # 複数環境での比較
+  multi-platform-comparison:
+    if: github.event.inputs.comparison_type == 'all' || github.event_name == 'schedule'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: Linux
+          - os: macos-latest
+            platform: macOS
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Set up Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc make time
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install coreutils
+
+      - name: Set up environment
+        run: |
+          cp .env.template .env
+          go run scripts/generate-jwt-secret/main.go -update-env
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/*.sh
+
+      - name: Run platform-specific comparison
+        run: |
+          echo "=== ${{ matrix.platform }} での比較結果 ==="
+          ./scripts/comprehensive_comparison.sh --performance --report > comparison_${{ matrix.platform }}.txt 2>&1 || true
+
+          if [ -f comparison_${{ matrix.platform }}.txt ]; then
+            echo "比較が完了しました"
+            cat comparison_${{ matrix.platform }}.txt
+          fi
+
+      - name: Upload platform-specific results
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparison-results-${{ matrix.platform }}-${{ github.run_number }}
+          path: |
+            comparison_${{ matrix.platform }}.txt
+            performance_comparison_report_*.md
+          retention-days: 30
