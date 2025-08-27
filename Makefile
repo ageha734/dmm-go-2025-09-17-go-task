@@ -1,7 +1,8 @@
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
+DATABASE_PORT ?= 3306
+DATABASE_USER ?= testuser
+DATABASE_PASSWORD ?= password
+DATABASE_NAME ?= testdb
+export DATABASE_PORT DATABASE_USER DATABASE_PASSWORD DATABASE_NAME
 
 E2E_TEST_NAME := $(shell find ./e2e -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | sort | uniq)
 GO_FILES := $(shell find . -name '*.go')
