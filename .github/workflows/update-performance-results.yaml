@@ -6,6 +6,10 @@ on:
     - cron: '0 1 * * *'
     # 毎日 19:00 JST (10:00 UTC)
     - cron: '0 10 * * *'
+
+  pull_request:
+    types: [opened, synchronize]
+
   workflow_dispatch: # 手動実行も可能
 
 jobs:

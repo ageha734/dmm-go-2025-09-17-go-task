@@ -4,6 +4,9 @@ on:
   schedule:
     # 毎週月曜日 09:00 JST (00:00 UTC)
     - cron: '0 0 * * 1'
+
+  pull_request:
+    types: [opened, synchronize]
   workflow_dispatch: # 手動実行も可能
     inputs:
       comparison_type:
