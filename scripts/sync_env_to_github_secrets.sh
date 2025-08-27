@@ -9,17 +9,15 @@ COLOR_RED='\033[0;31m'
 COLOR_NC='\033[0m'
 
 DEFAULT_ENV_FILE=".env"
-DEFAULT_ENVIRONMENT="production"
 
 show_help() {
-    echo -e "${COLOR_GREEN}GitHub Environment Variables 同期スクリプト${COLOR_NC}"
+    echo -e "${COLOR_GREEN}GitHub Repository Secrets 同期スクリプト${COLOR_NC}"
     echo ""
     echo -e "${COLOR_YELLOW}使用方法:${COLOR_NC}"
     echo -e "  $0 [OPTIONS]"
     echo ""
     echo -e "${COLOR_YELLOW}オプション:${COLOR_NC}"
     echo -e "  -f, --file FILE        環境変数ファイルを指定 (デフォルト: ${DEFAULT_ENV_FILE})"
-    echo -e "  -e, --environment ENV  GitHub Environment名を指定 (デフォルト: ${DEFAULT_ENVIRONMENT})"
     echo -e "  -r, --repo REPO        リポジトリ名を指定 (owner/repo形式)"
     echo -e "  -t, --token TOKEN      GitHub Personal Access Tokenを指定"
     echo -e "  -d, --dry-run          実際には実行せず、実行予定の内容を表示"
@@ -31,7 +29,7 @@ show_help() {
     echo -e "  - リポジトリへの admin 権限があること"
     echo ""
     echo -e "${COLOR_YELLOW}例:${COLOR_NC}"
-    echo -e "  $0 -f .env -e production -r owner/repo"
+    echo -e "  $0 -f .env -r owner/repo"
     echo -e "  $0 --dry-run"
     echo -e "  $0 --help"
 }
@@ -83,49 +81,20 @@ check_repository() {
     fi
 }
 
-ensure_environment() {
+set_secret() {
     local repo="$1"
-    local environment="$2"
-
-    echo -e "${COLOR_BLUE}Environment '$environment' の確認中...${COLOR_NC}"
-
-    if ! gh api "repos/$repo/environments/$environment" >/dev/null 2>&1; then
-        echo -e "${COLOR_YELLOW}Environment '$environment' が存在しません。作成します...${COLOR_NC}"
-
-        local payload=$(cat <<EOF
-{
-  "wait_timer": 0,
-  "prevent_self_review": false,
-  "reviewers": [],
-  "deployment_branch_policy": null
-}
-EOF
-)
-
-        echo "$payload" | gh api --method PUT "repos/$repo/environments/$environment" \
-            --input - >/dev/null
-
-        echo -e "${COLOR_GREEN}Environment '$environment' を作成しました。${COLOR_NC}"
-    else
-        echo -e "${COLOR_GREEN}Environment '$environment' が存在します。${COLOR_NC}"
-    fi
-}
-
-set_variable() {
-    local repo="$1"
-    local environment="$2"
-    local key="$3"
-    local value="$4"
-    local dry_run="$5"
+    local key="$2"
+    local value="$3"
+    local dry_run="$4"
 
     if [ "$dry_run" = "true" ]; then
-        echo -e "${COLOR_YELLOW}[DRY RUN]${COLOR_NC} $key を Environment '$environment' に設定予定"
+        echo -e "${COLOR_YELLOW}[DRY RUN]${COLOR_NC} $key をRepository secretsに設定予定"
         return
     fi
 
     echo -e "${COLOR_BLUE}$key を設定中...${COLOR_NC}"
 
-    echo "$value" | gh variable set "$key" --repo "$repo" --env "$environment"
+    echo "$value" | gh secret set "$key" --repo "$repo"
 
     if [ $? -eq 0 ]; then
         echo -e "${COLOR_GREEN}✅ $key を設定しました${COLOR_NC}"
@@ -137,7 +106,6 @@ set_variable() {
 
 main() {
     local env_file="$DEFAULT_ENV_FILE"
-    local environment="$DEFAULT_ENVIRONMENT"
     local repo=""
     local token=""
     local dry_run="false"
@@ -146,10 +114,6 @@ main() {
         case $1 in
             -f|--file)
                 env_file="$2"
-                shift 2
-                ;;
-            -e|--environment)
-                environment="$2"
                 shift 2
                 ;;
             -r|--repo)
@@ -208,19 +172,14 @@ main() {
     fi
 
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
-    echo -e "  🚀 ${COLOR_GREEN}GitHub Environment Variables 同期${COLOR_NC}"
+    echo -e "  🚀 ${COLOR_GREEN}GitHub Repository Secrets 同期${COLOR_NC}"
     echo -e "  ファイル: ${COLOR_YELLOW}$env_file${COLOR_NC}"
     echo -e "  リポジトリ: ${COLOR_YELLOW}$repo${COLOR_NC}"
-    echo -e "  Environment: ${COLOR_YELLOW}$environment${COLOR_NC}"
     if [ "$dry_run" = "true" ]; then
         echo -e "  モード: ${COLOR_YELLOW}DRY RUN${COLOR_NC}"
     fi
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
     echo ""
-
-    if [ "$dry_run" = "false" ]; then
-        ensure_environment "$repo" "$environment"
-    fi
 
     echo -e "${COLOR_BLUE}環境変数を解析中...${COLOR_NC}"
 
@@ -231,7 +190,7 @@ main() {
         if [ -n "$key" ] && [ -n "$value" ]; then
             count=$((count + 1))
 
-            if set_variable "$repo" "$environment" "$key" "$value" "$dry_run"; then
+            if set_secret "$repo" "$key" "$value" "$dry_run"; then
                 success_count=$((success_count + 1))
             fi
         fi
@@ -243,18 +202,18 @@ main() {
     echo -e "${COLOR_BLUE}=================================================${COLOR_NC}"
 
     if [ "$dry_run" = "true" ]; then
-        echo -e "処理予定の環境変数: ${COLOR_YELLOW}$count${COLOR_NC} 個"
+        echo -e "処理予定のsecrets: ${COLOR_YELLOW}$count${COLOR_NC} 個"
         echo -e "${COLOR_YELLOW}実際の同期を実行するには --dry-run オプションを外してください。${COLOR_NC}"
     else
-        echo -e "処理した環境変数: ${COLOR_YELLOW}$count${COLOR_NC} 個"
+        echo -e "処理したsecrets: ${COLOR_YELLOW}$count${COLOR_NC} 個"
         echo -e "成功: ${COLOR_GREEN}$success_count${COLOR_NC} 個"
 
         if [ $success_count -eq $count ]; then
-            echo -e "${COLOR_GREEN}✅ すべての環境変数の同期が完了しました！${COLOR_NC}"
+            echo -e "${COLOR_GREEN}✅ すべてのsecretsの同期が完了しました！${COLOR_NC}"
         else
             local failed_count=$((count - success_count))
             echo -e "失敗: ${COLOR_RED}$failed_count${COLOR_NC} 個"
-            echo -e "${COLOR_YELLOW}⚠️  一部の環境変数の同期に失敗しました。${COLOR_NC}"
+            echo -e "${COLOR_YELLOW}⚠️  一部のsecretsの同期に失敗しました。${COLOR_NC}"
         fi
     fi
 

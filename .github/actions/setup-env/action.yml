@@ -8,21 +8,21 @@ runs:
       shell: bash
       env:
         SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
-        DATABASE_HOST: ${{ vars.DATABASE_HOST }}
-        DATABASE_PORT: ${{ vars.DATABASE_PORT }}
-        DATABASE_USER: ${{ vars.DATABASE_USER }}
+        DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+        DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+        DATABASE_USER: ${{ secrets.DATABASE_USER }}
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-        DATABASE_NAME: ${{ vars.DATABASE_NAME }}
-        DATABASE_URL: ${{ vars.DATABASE_URL }}
-        REDIS_HOST: ${{ vars.REDIS_HOST }}
-        REDIS_PORT: ${{ vars.REDIS_PORT }}
+        DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        REDIS_PORT: ${{ secrets.REDIS_PORT }}
         REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        APP_PORT: ${{ vars.APP_PORT }}
-        APP_ENV: ${{ vars.APP_ENV }}
-        AUTH_RATE_LIMIT: ${{ vars.AUTH_RATE_LIMIT }}
-        REGISTER_RATE_LIMIT: ${{ vars.REGISTER_RATE_LIMIT }}
-        LOGIN_RATE_LIMIT: ${{ vars.LOGIN_RATE_LIMIT }}
+        APP_PORT: ${{ secrets.APP_PORT }}
+        APP_ENV: ${{ secrets.APP_ENV }}
+        AUTH_RATE_LIMIT: ${{ secrets.AUTH_RATE_LIMIT }}
+        REGISTER_RATE_LIMIT: ${{ secrets.REGISTER_RATE_LIMIT }}
+        LOGIN_RATE_LIMIT: ${{ secrets.LOGIN_RATE_LIMIT }}
       run: |
         echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
         echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
