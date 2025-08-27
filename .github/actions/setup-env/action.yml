@@ -13,6 +13,7 @@ runs:
         DATABASE_USER: ${{ vars.DATABASE_USER }}
         DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         DATABASE_NAME: ${{ vars.DATABASE_NAME }}
+        DATABASE_URL: ${{ vars.DATABASE_URL }}
         REDIS_HOST: ${{ vars.REDIS_HOST }}
         REDIS_PORT: ${{ vars.REDIS_PORT }}
         REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
@@ -27,6 +28,7 @@ runs:
         echo "DATABASE_USER=${DATABASE_USER}" >> .env
         echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
         echo "DATABASE_NAME=${DATABASE_NAME}" >> .env
+        echo "DATABASE_URL=${DATABASE_URL}" >> .env
         echo "REDIS_HOST=${REDIS_HOST}" >> .env
         echo "REDIS_HOST_TEST=localhost" >> .env
         echo "REDIS_PORT=${REDIS_PORT}" >> .env
