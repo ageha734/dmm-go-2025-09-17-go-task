@@ -83,6 +83,12 @@ jobs:
           cp .env.template .env
           go run scripts/generate-jwt-secret/main.go -update-env
 
+      - name: Update compose.yml with registry image
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
+          sed -i "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
+          echo "Updated compose.yml to use image: $IMAGE_NAME"
+
       - name: Setup Docker Services
         uses: ./.github/actions/setup-docker-services
         with:
