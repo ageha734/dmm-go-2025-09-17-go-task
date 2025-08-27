@@ -114,7 +114,9 @@ func (g *JWTSecretGenerator) generateSecret() (string, error) {
 
 	for len(encoded) < g.config.Length {
 		additionalBytes := make([]byte, 1)
-		rand.Read(additionalBytes)
+		if _, err := rand.Read(additionalBytes); err != nil {
+			return "", fmt.Errorf("failed to generate additional random bytes: %w", err)
+		}
 		additionalChar := base64.URLEncoding.EncodeToString(additionalBytes)
 		additionalChar = strings.TrimRight(additionalChar, "=")
 		if len(additionalChar) > 0 {
@@ -201,6 +203,20 @@ func findProjectRoot() (string, error) {
 	return wd, nil
 }
 
+func validateFilePath(path string) error {
+	cleanPath := filepath.Clean(path)
+
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path traversal detected: %s", path)
+	}
+
+	if filepath.IsAbs(cleanPath) {
+		return nil
+	}
+
+	return nil
+}
+
 func (g *JWTSecretGenerator) updateEnvFile(secret string) error {
 	projectRoot, err := findProjectRoot()
 	if err != nil {
@@ -248,17 +264,32 @@ func (g *JWTSecretGenerator) updateEnvFile(secret string) error {
 }
 
 func copyFile(src, dst string) error {
-	sourceFile, err := os.Open(src)
+	if err := validateFilePath(src); err != nil {
+		return fmt.Errorf("invalid source path: %w", err)
+	}
+	if err := validateFilePath(dst); err != nil {
+		return fmt.Errorf("invalid destination path: %w", err)
+	}
+
+	sourceFile, err := os.Open(filepath.Clean(src))
 	if err != nil {
 		return err
 	}
-	defer sourceFile.Close()
+	defer func() {
+		if closeErr := sourceFile.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close source file: %v\n", closeErr)
+		}
+	}()
 
 	destFile, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
+	defer func() {
+		if closeErr := destFile.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close destination file: %v\n", closeErr)
+		}
+	}()
 
 	scanner := bufio.NewScanner(sourceFile)
 	writer := bufio.NewWriter(destFile)
@@ -273,11 +304,19 @@ func copyFile(src, dst string) error {
 }
 
 func getCurrentJWTSecret(envFile string) (string, bool, error) {
-	file, err := os.Open(envFile)
+	if err := validateFilePath(envFile); err != nil {
+		return "", false, fmt.Errorf("invalid env file path: %w", err)
+	}
+
+	file, err := os.Open(filepath.Clean(envFile))
 	if err != nil {
 		return "", false, err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", closeErr)
+		}
+	}()
 
 	scanner := bufio.NewScanner(file)
 	jwtSecretRegex := regexp.MustCompile(`^JWT_SECRET=(.*)$`)
@@ -293,7 +332,11 @@ func getCurrentJWTSecret(envFile string) (string, bool, error) {
 }
 
 func updateJWTSecretInFile(envFile, secret string) error {
-	file, err := os.Open(envFile)
+	if err := validateFilePath(envFile); err != nil {
+		return fmt.Errorf("invalid env file path: %w", err)
+	}
+
+	file, err := os.Open(filepath.Clean(envFile))
 	if err != nil {
 		return err
 	}
@@ -312,7 +355,9 @@ func updateJWTSecretInFile(envFile, secret string) error {
 			lines = append(lines, line)
 		}
 	}
-	file.Close()
+	if closeErr := file.Close(); closeErr != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to close file: %v\n", closeErr)
+	}
 
 	if err := scanner.Err(); err != nil {
 		return err
@@ -326,7 +371,11 @@ func updateJWTSecretInFile(envFile, secret string) error {
 	if err != nil {
 		return err
 	}
-	defer outputFile.Close()
+	defer func() {
+		if closeErr := outputFile.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close output file: %v\n", closeErr)
+		}
+	}()
 
 	writer := bufio.NewWriter(outputFile)
 	for _, line := range lines {
