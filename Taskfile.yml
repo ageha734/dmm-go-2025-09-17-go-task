@@ -260,6 +260,8 @@ tasks:
     internal: true
     silent: true
     prefix: "🚀 -{{.SERVICENAME}}-"
+    sources:
+      - "**/*.go"
     cmds:
     - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './mock/seed.sql'
     - cmd: mysql -h 127.0.0.1 -P $DATABASE_PORT -u $DATABASE_USER -p$DATABASE_PASSWORD $DATABASE_NAME < './e2e/{{.SERVICENAME}}/01-insert.sql'
