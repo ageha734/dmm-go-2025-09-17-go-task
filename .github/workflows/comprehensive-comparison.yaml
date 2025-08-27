@@ -243,8 +243,6 @@ jobs:
       - name: Install docker (macOS)
         if: matrix.os == 'macos-14'
         uses: douglascamata/setup-docker-macos-action@v1
-        with:
-          docker-version: 28.3.2
 
       - name: Set up environment
         run: |
