@@ -128,6 +128,73 @@ docker compose up -d
 ./scripts/compare_speed_check.sh unit
 ```
 
+### 🤖 自動化（GitHub Actions）
+
+#### 自動実行スケジュール
+
+- **毎日10時・19時**: パフォーマンス結果の自動更新 (`update-performance-results.yaml`)
+- **毎週月曜日**: 包括的比較レポートの生成 (`comprehensive-comparison.yaml`)
+
+#### 手動実行
+
+GitHub Actionsページから以下のワークフローを手動実行できます：
+
+1. **Update Performance Results** - READMEの結果表を更新
+2. **Comprehensive Make vs Task Comparison** - 詳細な比較レポートを生成
+
+#### 自動更新される内容
+
+- READMEのパフォーマンス比較表
+- 実行時間の測定結果
+- 最終更新日時
+- Artifactsとして詳細レポートをダウンロード可能
+
+### 📈 比較項目
+
+| 項目 | 説明 | 測定方法 |
+|------|------|----------|
+| **実行時間** | タスクの完了までの時間 | `time` コマンド |
+| **メモリ使用量** | 最大メモリ消費量（KB） | `ps` コマンド監視 |
+| **CPU使用率** | 最大CPU使用率（%） | `ps` コマンド監視 |
+| **複雑性** | 設定ファイルの複雑さ | 行数、ターゲット数、特殊構文 |
+| **学習コスト** | 新規参加者の学習しやすさ | 構文の複雑性分析 |
+
+### 🎯 使い分けガイド
+
+| 用途 | 推奨ツール | 実行時間 |
+|------|------------|----------|
+| **クイック確認** | `quick_comparison.sh` | ~30秒 |
+| **詳細分析** | `comprehensive_comparison.sh --all --report` | ~5分 |
+| **E2Eテスト専用** | `e2e_speed_check.sh` | ~2分 |
+| **CI/CD統合** | GitHub Actionsワークフロー | 自動 |
+| **特定タスク詳細** | `compare_speed_check.sh` | ~1分 |
+
+### 📋 レポート出力形式
+
+包括的比較ツールは以下の形式でデータを出力します：
+
+- **コンソール出力**: リアルタイム結果表示
+- **CSV形式**: 数値データ（パフォーマンス測定結果）
+- **Markdown形式**: 詳細な分析レポート
+- **GitHub Actions Artifacts**: ダウンロード可能なレポートファイル
+
+### 🚀 クイックスタート
+
+初回セットアップ後、すぐに比較を開始できます：
+
+```bash
+# 1. 環境セットアップ（初回のみ）
+cp .env.template .env
+go run scripts/generate-jwt-secret/main.go -update-env
+task setup
+
+# 2. クイック比較を実行
+./scripts/quick_comparison.sh
+
+# 3. 詳細レポートを生成
+./scripts/comprehensive_comparison.sh --all --report
+```
+
 ## 実行結果の例（参考値）
 
 以下は、開発環境（MacBook Pro, M4 Pro）で各比較スクリプトを実行した際の結果の一例です。
