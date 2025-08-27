@@ -1,7 +1,8 @@
+# --- 環境変数とデフォルト値 ---
 DATABASE_PORT ?= 3306
-DATABASE_USER ?= testuser
+DATABASE_USER ?= user
 DATABASE_PASSWORD ?= password
-DATABASE_NAME ?= testdb
+DATABASE_NAME ?= test
 export DATABASE_PORT DATABASE_USER DATABASE_PASSWORD DATABASE_NAME
 
 E2E_TEST_NAME := $(shell find ./e2e -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | sort | uniq)
@@ -55,7 +56,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 	fi
 
 .install-mysql:
-	@OS=$$($(MAKE) -s .detect-os); \
+	@OS=$$($(MAKE) -s .detect-os 2>/dev/null); \
 	echo "🔧 OS: $$OS でmysql-clientをインストールします..."; \
 	case $$OS in \
 		"macos") \
@@ -97,7 +98,7 @@ setup: .setup-mysql .setup-hurl .setup-shlack ## 必要なツール（mysql-clie
 	echo "✅ mysql-clientのインストールが完了しました。"
 
 .install-hurl:
-	@OS=$$($(MAKE) -s .detect-os); \
+	@OS=$$($(MAKE) -s .detect-os 2>/dev/null); \
 	echo "🔧 OS: $$OS でhurlをインストールします..."; \
 	case $$OS in \
 		"macos") \
