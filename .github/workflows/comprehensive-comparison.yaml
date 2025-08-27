@@ -7,7 +7,7 @@ on:
 
   pull_request:
     types: [opened, synchronize]
-  workflow_dispatch: # 手動実行も可能
+  workflow_dispatch:   # 手動実行も可能
     inputs:
       comparison_type:
         description: '比較タイプを選択'
@@ -209,7 +209,7 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: Linux
-          - os: macos-latest
+          - os: macos-14
             platform: macOS
 
     runs-on: ${{ matrix.os }}
@@ -236,12 +236,12 @@ jobs:
           sudo apt-get install -y bc make time
 
       - name: Install dependencies (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-14'
         run: |
           brew install coreutils
 
       - name: Install docker (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-14'
         uses: douglascamata/setup-docker-macos-action@v1
         with:
           docker-version: 28.3.2
@@ -259,7 +259,7 @@ jobs:
           echo "Updated compose.yml to use image: $IMAGE_NAME"
 
       - name: Update compose.yml with registry image (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-14'
         run: |
           IMAGE_NAME="ghcr.io/${{ github.repository }}:${{ needs.build-and-push-image.outputs.image-tag }}"
           sed -i '' "s|image: api:latest|image: $IMAGE_NAME|g" compose.yml
