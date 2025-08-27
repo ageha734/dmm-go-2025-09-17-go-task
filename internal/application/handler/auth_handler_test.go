@@ -63,8 +63,8 @@ func (m *MockAuthUsecase) ChangePassword(ctx context.Context, userID uint, req u
 	return args.Error(0)
 }
 
-func (m *MockAuthUsecase) Logout(ctx context.Context, userID uint, sessionID, ipAddress, userAgent string) error {
-	args := m.Called(ctx, userID, sessionID, ipAddress, userAgent)
+func (m *MockAuthUsecase) Logout(ctx context.Context, userID uint, token, sessionID, ipAddress, userAgent string) error {
+	args := m.Called(ctx, userID, token, sessionID, ipAddress, userAgent)
 	return args.Error(0)
 }
 

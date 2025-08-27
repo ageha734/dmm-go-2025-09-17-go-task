@@ -236,6 +236,7 @@ jsonpath "$.error" exists
 
 # Test 41: Logout
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 HTTP 200
@@ -246,6 +247,4 @@ jsonpath "$.message" exists
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{access_token}}
 
-HTTP 200
-[Asserts]
-jsonpath "$.data" exists
+HTTP 401

@@ -318,7 +318,7 @@ func TestAuthDomainServiceRegister(t *testing.T) {
 			refreshTokenRepo := new(MockRefreshTokenRepository)
 			tt.setupMock(userRepo, authRepo, roleRepo)
 
-			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 			ctx := context.Background()
 			user, err := service.Register(ctx, tt.userName, tt.email, tt.password, tt.age)
@@ -395,7 +395,7 @@ func TestAuthDomainServiceLogin(t *testing.T) {
 			refreshTokenRepo := new(MockRefreshTokenRepository)
 			tt.setupMock(authRepo, roleRepo)
 
-			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 			ctx := context.Background()
 			auth, roles, err := service.Login(ctx, tt.email, tt.password)
@@ -421,7 +421,7 @@ func TestAuthDomainServiceGenerateAccessToken(t *testing.T) {
 	authRepo := new(MockAuthRepository)
 	roleRepo := new(MockRoleRepository)
 	refreshTokenRepo := new(MockRefreshTokenRepository)
-	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 	userID := uint(1)
 	email := "test@example.com"
@@ -438,7 +438,7 @@ func TestAuthDomainServiceValidateToken(t *testing.T) {
 	authRepo := new(MockAuthRepository)
 	roleRepo := new(MockRoleRepository)
 	refreshTokenRepo := new(MockRefreshTokenRepository)
-	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 	userID := uint(1)
 	email := "test@example.com"
@@ -495,7 +495,7 @@ func TestAuthDomainServiceGenerateRefreshToken(t *testing.T) {
 	ctx := context.Background()
 	refreshTokenRepo.On("Create", ctx, mock.AnythingOfType("*entity.RefreshToken")).Return(nil)
 
-	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+	service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 	userID := uint(1)
 	token, err := service.GenerateRefreshToken(ctx, userID)
@@ -558,7 +558,7 @@ func TestAuthDomainServiceRefreshToken(t *testing.T) {
 			refreshTokenRepo := new(MockRefreshTokenRepository)
 			tt.setupMock(authRepo, roleRepo, refreshTokenRepo)
 
-			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, "test-secret")
+			service := service.NewAuthDomainService(userRepo, authRepo, roleRepo, refreshTokenRepo, nil, "test-secret")
 
 			ctx := context.Background()
 			auth, roles, newToken, err := service.RefreshToken(ctx, tt.token)

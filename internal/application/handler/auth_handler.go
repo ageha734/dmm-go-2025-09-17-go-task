@@ -176,6 +176,18 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
+	token, tokenExists := c.Get("token")
+	if !tokenExists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Token not found"})
+		return
+	}
+
+	tokenStr, ok := token.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token type"})
+		return
+	}
+
 	sessionID := c.GetHeader("X-Session-ID")
 	if sessionID == "" {
 		sessionID = "default"
@@ -187,7 +199,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	err := h.authUsecase.Logout(c.Request.Context(), userIDUint, sessionID, c.ClientIP(), c.GetHeader("User-Agent"))
+	err := h.authUsecase.Logout(c.Request.Context(), userIDUint, tokenStr, sessionID, c.ClientIP(), c.GetHeader("User-Agent"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Logout failed"})
 		return

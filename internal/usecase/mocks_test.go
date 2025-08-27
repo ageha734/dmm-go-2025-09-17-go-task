@@ -81,8 +81,8 @@ func (m *MockAuthDomainService) ChangePassword(ctx context.Context, userID uint,
 	return args.Error(0)
 }
 
-func (m *MockAuthDomainService) Logout(ctx context.Context, userID uint) error {
-	args := m.Called(ctx, userID)
+func (m *MockAuthDomainService) Logout(ctx context.Context, userID uint, token string) error {
+	args := m.Called(ctx, userID, token)
 	return args.Error(0)
 }
 
@@ -144,6 +144,9 @@ func (m *MockFraudDomainService) GetBlacklistedIPs(ctx context.Context, page, li
 
 func (m *MockFraudDomainService) GetSecurityEvents(ctx context.Context, page, limit int) (interface{}, error) {
 	args := m.Called(ctx, page, limit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0), args.Error(1)
 }
 
@@ -169,6 +172,9 @@ func (m *MockFraudDomainService) GetRateLimitRules(ctx context.Context) (interfa
 
 func (m *MockFraudDomainService) GetActiveSessions(ctx context.Context) (interface{}, error) {
 	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
 	return args.Get(0), args.Error(1)
 }
 
@@ -178,7 +184,11 @@ func (m *MockFraudDomainService) DeactivateSession(ctx context.Context, sessionI
 
 func (m *MockFraudDomainService) GetDevices(ctx context.Context) (interface{}, error) {
 	args := m.Called(ctx)
-	return args.Get(0), args.Error(1)
+	result := args.Get(0)
+	if result == nil {
+		return nil, args.Error(1)
+	}
+	return result, args.Error(1)
 }
 
 func (m *MockFraudDomainService) TrustDevice(ctx context.Context, fingerprint string) error {

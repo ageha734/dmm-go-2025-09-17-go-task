@@ -3,14 +3,17 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/service"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/infrastructure/external"
 )
 
 type AuthUsecase struct {
 	authDomainService  service.AuthDomainServiceInterface
 	fraudDomainService service.FraudDomainServiceInterface
+	cacheService       *external.CacheService
 }
 
 type LoginResponse struct {
@@ -41,10 +44,11 @@ type ChangePasswordRequest struct {
 	NewPassword     string `json:"new_password" binding:"required,min=6"`
 }
 
-func NewAuthUsecase(authDomainService service.AuthDomainServiceInterface, fraudDomainService service.FraudDomainServiceInterface) *AuthUsecase {
+func NewAuthUsecase(authDomainService service.AuthDomainServiceInterface, fraudDomainService service.FraudDomainServiceInterface, cacheService *external.CacheService) *AuthUsecase {
 	return &AuthUsecase{
 		authDomainService:  authDomainService,
 		fraudDomainService: fraudDomainService,
+		cacheService:       cacheService,
 	}
 }
 
@@ -177,9 +181,13 @@ func (u *AuthUsecase) ChangePassword(ctx context.Context, userID uint, req Chang
 	return nil
 }
 
-func (u *AuthUsecase) Logout(ctx context.Context, userID uint, sessionID, ipAddress, userAgent string) error {
-	if err := u.authDomainService.Logout(ctx, userID); err != nil {
+func (u *AuthUsecase) Logout(ctx context.Context, userID uint, token, sessionID, ipAddress, userAgent string) error {
+	if err := u.authDomainService.Logout(ctx, userID, token); err != nil {
 		return err
+	}
+
+	if u.cacheService != nil && token != "" {
+		_ = u.cacheService.BlacklistToken(ctx, token, time.Hour)
 	}
 
 	if sessionID != "" {

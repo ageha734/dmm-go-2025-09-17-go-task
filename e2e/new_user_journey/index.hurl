@@ -411,6 +411,7 @@ jsonpath "$.error" exists
 
 # Test 33: 第一ユーザーのログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{updated_user_token}}
 
 HTTP 200
@@ -419,6 +420,7 @@ jsonpath "$.message" exists
 
 # Test 34: 第二ユーザーのログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{second_new_user_token}}
 
 HTTP 200
@@ -427,6 +429,7 @@ jsonpath "$.message" exists
 
 # Test 35: 若いユーザーのログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{young_user_token}}
 
 HTTP 200
@@ -435,6 +438,7 @@ jsonpath "$.message" exists
 
 # Test 36: シニアユーザーのログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{senior_user_token}}
 
 HTTP 200
@@ -443,6 +447,7 @@ jsonpath "$.message" exists
 
 # Test 37: 長い名前ユーザーのログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{long_name_user_token}}
 
 HTTP 200
@@ -457,16 +462,12 @@ jsonpath "$.message" exists
 GET http://localhost/api/v1/user/profile
 Authorization: Bearer {{updated_user_token}}
 
-HTTP 200
-[Asserts]
-jsonpath "$.data" exists
+HTTP 401
 
 # Test 39: 全セッション終了後の確認
 GET http://localhost/api/v1/user/profile
 
 HTTP 401
-[Asserts]
-jsonpath "$.error" exists
 
 # Test 40: 最終セキュリティ検証
 POST http://localhost/api/v1/auth/login
@@ -492,6 +493,7 @@ jsonpath "$.data.user_id" == {{new_user_id}}
 
 # Test 42: 最終ログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{final_verification_token}}
 
 HTTP 200

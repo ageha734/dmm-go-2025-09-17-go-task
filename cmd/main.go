@@ -42,11 +42,15 @@ func main() {
 	userSessionRepo := persistence.NewUserSessionRepository(db)
 	deviceFingerprintRepo := persistence.NewDeviceFingerprintRepository(db)
 
+	redisClient := external.NewRedisClient(getRedisAddr(), getRedisPassword(), getRedisDB())
+	cacheService := external.NewCacheService(redisClient)
+
 	authDomainService := service.NewAuthDomainService(
 		userRepo,
 		authRepo,
 		roleRepo,
 		refreshTokenRepo,
+		cacheService,
 		jwtSecret,
 	)
 
@@ -59,10 +63,7 @@ func main() {
 		deviceFingerprintRepo,
 	)
 
-	redisClient := external.NewRedisClient(getRedisAddr(), getRedisPassword(), getRedisDB())
-	cacheService := external.NewCacheService(redisClient)
-
-	authUsecase := usecase.NewAuthUsecase(authDomainService, fraudDomainService)
+	authUsecase := usecase.NewAuthUsecase(authDomainService, fraudDomainService, cacheService)
 	userUsecase := usecase.NewUserUsecase(
 		userRepo,
 		userProfileRepo,

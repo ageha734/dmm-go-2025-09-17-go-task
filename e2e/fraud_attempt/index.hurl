@@ -228,6 +228,7 @@ jsonpath "$.data.access_token" exists
 
 # Test 47: 正常ユーザーログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{legitimate_user_token}}
 
 HTTP 200
@@ -236,6 +237,7 @@ jsonpath "$.message" exists
 
 # Test 48: 管理者ログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{restored_admin_token}}
 
 HTTP 200

@@ -14,5 +14,5 @@ type AuthDomainServiceInterface interface {
 	ValidateToken(tokenString string) (*JWTClaims, error)
 	RefreshToken(ctx context.Context, refreshTokenStr string) (*entity.Auth, []string, string, error)
 	ChangePassword(ctx context.Context, userID uint, currentPassword, newPassword string) error
-	Logout(ctx context.Context, userID uint) error
+	Logout(ctx context.Context, userID uint, token string) error
 }

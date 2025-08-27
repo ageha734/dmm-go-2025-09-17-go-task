@@ -11,6 +11,6 @@ type AuthUsecaseInterface interface {
 	Login(ctx context.Context, req LoginRequest, ipAddress, userAgent string) (*LoginResponse, error)
 	RefreshToken(ctx context.Context, req RefreshTokenRequest) (*LoginResponse, error)
 	ChangePassword(ctx context.Context, userID uint, req ChangePasswordRequest, ipAddress, userAgent string) error
-	Logout(ctx context.Context, userID uint, sessionID, ipAddress, userAgent string) error
+	Logout(ctx context.Context, userID uint, token, sessionID, ipAddress, userAgent string) error
 	ValidateToken(tokenString string) (*service.JWTClaims, error)
 }

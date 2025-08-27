@@ -20,11 +20,16 @@ var (
 	ErrTokenExpired       = errors.New("token expired")
 )
 
+type CacheService interface {
+	BlacklistToken(ctx context.Context, tokenID string, expiration time.Duration) error
+}
+
 type AuthDomainService struct {
 	userRepo         repository.UserRepository
 	authRepo         repository.AuthRepository
 	roleRepo         repository.RoleRepository
 	refreshTokenRepo repository.RefreshTokenRepository
+	cacheService     CacheService
 	jwtSecret        string
 }
 
@@ -40,6 +45,7 @@ func NewAuthDomainService(
 	authRepo repository.AuthRepository,
 	roleRepo repository.RoleRepository,
 	refreshTokenRepo repository.RefreshTokenRepository,
+	cacheService CacheService,
 	jwtSecret string,
 ) *AuthDomainService {
 	return &AuthDomainService{
@@ -47,6 +53,7 @@ func NewAuthDomainService(
 		authRepo:         authRepo,
 		roleRepo:         roleRepo,
 		refreshTokenRepo: refreshTokenRepo,
+		cacheService:     cacheService,
 		jwtSecret:        jwtSecret,
 	}
 }
@@ -224,8 +231,18 @@ func (s *AuthDomainService) ChangePassword(ctx context.Context, userID uint, cur
 	return nil
 }
 
-func (s *AuthDomainService) Logout(ctx context.Context, userID uint) error {
-	return s.refreshTokenRepo.RevokeByUserID(ctx, userID)
+func (s *AuthDomainService) Logout(ctx context.Context, userID uint, token string) error {
+	if err := s.refreshTokenRepo.RevokeByUserID(ctx, userID); err != nil {
+		return err
+	}
+
+	if s.cacheService != nil && token != "" {
+		if err := s.cacheService.BlacklistToken(ctx, token, time.Hour); err != nil {
+			return fmt.Errorf("failed to blacklist token: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *AuthDomainService) assignDefaultRole(ctx context.Context, userID uint) error {

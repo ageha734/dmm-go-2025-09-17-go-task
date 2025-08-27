@@ -311,6 +311,7 @@ jsonpath "$.error" exists
 
 # Test 24: 第一管理者セッション終了
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{updated_admin_token}}
 
 HTTP 200
@@ -321,12 +322,13 @@ jsonpath "$.message" exists
 GET http://localhost/api/v1/admin/users
 Authorization: Bearer {{updated_admin_token}}
 
-HTTP 200
+HTTP 401
 [Asserts]
 jsonpath "$.data" exists
 
 # Test 26: 第二管理者セッション終了
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{second_admin_token}}
 
 HTTP 200

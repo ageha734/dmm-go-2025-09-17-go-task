@@ -25,6 +25,7 @@ jsonpath "$.data" exists
 
 # 3. ログアウト
 POST http://localhost/api/v1/user/logout
+Content-Type: application/json
 Authorization: Bearer {{access_token}}
 
 HTTP 200

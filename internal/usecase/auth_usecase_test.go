@@ -72,7 +72,7 @@ func TestAuthUsecaseRegister(t *testing.T) {
 			fraudService := new(MockFraudDomainService)
 			tt.setupMock(authService, fraudService)
 
-			usecase := usecase.NewAuthUsecase(authService, fraudService)
+			usecase := usecase.NewAuthUsecase(authService, fraudService, nil)
 
 			ctx := context.Background()
 			result, err := usecase.Register(ctx, tt.req, tt.ipAddress, tt.userAgent)
@@ -153,7 +153,7 @@ func TestAuthUsecaseLogin(t *testing.T) {
 			fraudService := new(MockFraudDomainService)
 			tt.setupMock(authService, fraudService)
 
-			usecase := usecase.NewAuthUsecase(authService, fraudService)
+			usecase := usecase.NewAuthUsecase(authService, fraudService, nil)
 
 			ctx := context.Background()
 			result, err := usecase.Login(ctx, tt.req, tt.ipAddress, tt.userAgent)
@@ -216,7 +216,7 @@ func TestAuthUsecaseRefreshToken(t *testing.T) {
 			fraudService := new(MockFraudDomainService)
 			tt.setupMock(authService, fraudService)
 
-			usecase := usecase.NewAuthUsecase(authService, fraudService)
+			usecase := usecase.NewAuthUsecase(authService, fraudService, nil)
 
 			ctx := context.Background()
 			result, err := usecase.RefreshToken(ctx, tt.req)
@@ -285,7 +285,7 @@ func TestAuthUsecaseChangePassword(t *testing.T) {
 			fraudService := new(MockFraudDomainService)
 			tt.setupMock(authService, fraudService)
 
-			usecase := usecase.NewAuthUsecase(authService, fraudService)
+			usecase := usecase.NewAuthUsecase(authService, fraudService, nil)
 
 			ctx := context.Background()
 			err := usecase.ChangePassword(ctx, tt.userID, tt.req, tt.ipAddress, tt.userAgent)
@@ -320,7 +320,7 @@ func TestAuthUsecaseLogout(t *testing.T) {
 			userAgent: "test-agent",
 			setupMock: func(authService *MockAuthDomainService, fraudService *MockFraudDomainService) {
 				ctx := context.Background()
-				authService.On("Logout", ctx, uint(1)).Return(nil)
+				authService.On("Logout", ctx, uint(1), "test-token").Return(nil)
 				fraudService.On("DeactivateUserSession", ctx, "session123").Return(nil)
 				fraudService.On("CreateSecurityEvent", ctx, &[]uint{1}[0], "LOGOUT", "User logged out", "192.168.1.1", "test-agent", "LOW").Return(nil)
 			},
@@ -334,7 +334,7 @@ func TestAuthUsecaseLogout(t *testing.T) {
 			userAgent: "test-agent",
 			setupMock: func(authService *MockAuthDomainService, fraudService *MockFraudDomainService) {
 				ctx := context.Background()
-				authService.On("Logout", ctx, uint(1)).Return(assert.AnError)
+				authService.On("Logout", ctx, uint(1), "test-token").Return(assert.AnError)
 			},
 			wantErr: true,
 		},
@@ -346,10 +346,10 @@ func TestAuthUsecaseLogout(t *testing.T) {
 			fraudService := new(MockFraudDomainService)
 			tt.setupMock(authService, fraudService)
 
-			usecase := usecase.NewAuthUsecase(authService, fraudService)
+			usecase := usecase.NewAuthUsecase(authService, fraudService, nil)
 
 			ctx := context.Background()
-			err := usecase.Logout(ctx, tt.userID, tt.sessionID, tt.ipAddress, tt.userAgent)
+			err := usecase.Logout(ctx, tt.userID, "test-token", tt.sessionID, tt.ipAddress, tt.userAgent)
 
 			if tt.wantErr {
 				assert.Error(t, err)
