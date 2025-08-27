@@ -3,6 +3,10 @@ name: E2E Test Performance Comparison
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
   SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
@@ -11,6 +15,9 @@ jobs:
   build-and-push-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
       image-tag: ${{ steps.image-tag.outputs.tag }}
 
