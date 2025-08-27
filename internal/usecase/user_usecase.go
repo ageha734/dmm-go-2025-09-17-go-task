@@ -7,6 +7,7 @@ import (
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/repository"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/service"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/infrastructure/external"
 )
 
 type UserUsecase struct {
@@ -14,6 +15,7 @@ type UserUsecase struct {
 	userProfileRepo    repository.UserProfileRepository
 	userMembershipRepo repository.UserMembershipRepository
 	fraudDomainService service.FraudDomainServiceInterface
+	redisClient        *external.RedisClient
 }
 
 type CreateUserRequest struct {
@@ -41,12 +43,14 @@ func NewUserUsecase(
 	userProfileRepo repository.UserProfileRepository,
 	userMembershipRepo repository.UserMembershipRepository,
 	fraudDomainService service.FraudDomainServiceInterface,
+	redisClient *external.RedisClient,
 ) *UserUsecase {
 	return &UserUsecase{
 		userRepo:           userRepo,
 		userProfileRepo:    userProfileRepo,
 		userMembershipRepo: userMembershipRepo,
 		fraudDomainService: fraudDomainService,
+		redisClient:        redisClient,
 	}
 }
 
@@ -228,6 +232,18 @@ func (u *UserUsecase) HealthCheck(ctx context.Context) map[string]string {
 		status["database"] = "disconnected"
 	} else {
 		status["database"] = "connected"
+	}
+
+	if u.redisClient != nil {
+		err := u.redisClient.Ping(ctx)
+		if err != nil {
+			status["status"] = "error"
+			status["redis"] = "disconnected"
+		} else {
+			status["redis"] = "connected"
+		}
+	} else {
+		status["redis"] = "not configured"
 	}
 
 	return status

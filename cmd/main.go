@@ -58,17 +58,18 @@ func main() {
 		deviceFingerprintRepo,
 	)
 
+	redisClient := external.NewRedisClient(getRedisAddr(), getRedisPassword(), getRedisDB())
+	cacheService := external.NewCacheService(redisClient)
+
 	authUsecase := usecase.NewAuthUsecase(authDomainService, fraudDomainService)
 	userUsecase := usecase.NewUserUsecase(
 		userRepo,
 		userProfileRepo,
 		userMembershipRepo,
 		fraudDomainService,
+		redisClient,
 	)
 	fraudUsecase := usecase.NewFraudUsecase(fraudDomainService)
-
-	redisClient := external.NewRedisClient(getRedisAddr(), getRedisPassword(), getRedisDB())
-	cacheService := external.NewCacheService(redisClient)
 
 	authMiddleware := middleware.NewAuthMiddleware(authDomainService, cacheService)
 	rateLimitMiddleware := middleware.NewRateLimitMiddleware(cacheService)

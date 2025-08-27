@@ -37,6 +37,7 @@ type HealthCheckResponse struct {
 	Status   string `json:"status"`
 	Service  string `json:"service"`
 	Database string `json:"database,omitempty"`
+	Redis    string `json:"redis,omitempty"`
 }
 
 func NewUserListResponseFromEntities(users []*entity.User, page, limit int, total int64) UserListResponse {
@@ -78,6 +79,10 @@ func NewHealthCheckResponse(status map[string]string) HealthCheckResponse {
 
 	if database, exists := status["database"]; exists {
 		response.Database = database
+	}
+
+	if redis, exists := status["redis"]; exists {
+		response.Redis = redis
 	}
 
 	return response

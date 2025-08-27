@@ -163,15 +163,18 @@ func (m *MockUserMembershipRepository) GetStats(ctx context.Context) (map[string
 	return nil, args.Error(1)
 }
 
+func createTestUserUsecase() *usecase.UserUsecase {
+	userRepo := &MockUserRepository{}
+	userProfileRepo := &MockUserProfileRepository{}
+	userMembershipRepo := &MockUserMembershipRepository{}
+	fraudService := &MockFraudDomainService{}
+
+	return usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
+}
+
 func TestNewUserUsecase(t *testing.T) {
 	t.Run("新しいUserUsecaseを正常に作成できる", func(t *testing.T) {
-		userRepo := &MockUserRepository{}
-		userProfileRepo := &MockUserProfileRepository{}
-		userMembershipRepo := &MockUserMembershipRepository{}
-		fraudService := &MockFraudDomainService{}
-
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
-
+		uc := createTestUserUsecase()
 		assert.NotNil(t, uc)
 	})
 }
@@ -183,7 +186,7 @@ func TestUserUsecaseCreateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		req := usecase.CreateUserRequest{
 			Name:  "テストユーザー",
@@ -215,7 +218,7 @@ func TestUserUsecaseCreateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		req := usecase.CreateUserRequest{
 			Name:  "テストユーザー",
@@ -240,7 +243,7 @@ func TestUserUsecaseCreateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		req := usecase.CreateUserRequest{
 			Name:  "テストユーザー",
@@ -265,7 +268,7 @@ func TestUserUsecaseCreateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		req := usecase.CreateUserRequest{
 			Name:  "テストユーザー",
@@ -293,7 +296,7 @@ func TestUserUsecaseGetUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		expectedUser := &entity.User{
 			ID:    1,
@@ -318,7 +321,7 @@ func TestUserUsecaseGetUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("GetByID", mock.Anything, uint(999)).Return(nil, errors.New("user not found"))
 
@@ -339,7 +342,7 @@ func TestUserUsecaseGetUsers(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		expectedUsers := []*entity.User{
 			{ID: 1, Name: "ユーザー1", Email: "user1@example.com", Age: 25},
@@ -367,7 +370,7 @@ func TestUserUsecaseGetUsers(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 20).Return([]*entity.User{}, int64(0), nil)
 
@@ -386,7 +389,7 @@ func TestUserUsecaseGetUsers(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 20).Return([]*entity.User{}, int64(0), nil)
 
@@ -406,7 +409,7 @@ func TestUserUsecaseUpdateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		existingUser := &entity.User{
 			ID:    1,
@@ -443,7 +446,7 @@ func TestUserUsecaseUpdateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		req := usecase.UpdateUserRequest{
 			Name: "新名前",
@@ -462,7 +465,7 @@ func TestUserUsecaseUpdateUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		existingUser := &entity.User{
 			ID:    1,
@@ -495,7 +498,7 @@ func TestUserUsecaseDeleteUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		existingUser := &entity.User{
 			ID:    1,
@@ -525,7 +528,7 @@ func TestUserUsecaseDeleteUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		err := uc.DeleteUser(context.Background(), 1, 2, "192.168.1.1", "test-agent")
 
@@ -539,7 +542,7 @@ func TestUserUsecaseDeleteUser(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("GetByID", mock.Anything, uint(999)).Return(nil, errors.New("user not found"))
 
@@ -559,7 +562,7 @@ func TestUserUsecaseGetUserStats(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 1).Return([]*entity.User{}, int64(100), nil)
 		userMembershipRepo.On("GetStats", mock.Anything).Return(map[string]interface{}{
@@ -585,7 +588,7 @@ func TestUserUsecaseGetUserStats(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 1).Return([]*entity.User{}, int64(50), nil)
 		userMembershipRepo.On("GetStats", mock.Anything).Return(nil, errors.New("membership stats error"))
@@ -609,7 +612,7 @@ func TestUserUsecaseHealthCheck(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 1).Return([]*entity.User{}, int64(0), nil)
 
@@ -628,7 +631,7 @@ func TestUserUsecaseHealthCheck(t *testing.T) {
 		userMembershipRepo := &MockUserMembershipRepository{}
 		fraudService := &MockFraudDomainService{}
 
-		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService)
+		uc := usecase.NewUserUsecase(userRepo, userProfileRepo, userMembershipRepo, fraudService, nil)
 
 		userRepo.On("List", mock.Anything, 0, 1).Return(nil, int64(0), errors.New("database connection error"))
 

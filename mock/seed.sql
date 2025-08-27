@@ -52,8 +52,8 @@ INSERT INTO `users` (`name`, `email`, `age`, `created_at`, `updated_at`) VALUES
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
 
 INSERT INTO `auths` (`user_id`, `email`, `password_hash`, `is_active`, `created_at`, `updated_at`)
--- bcrypt by password: abc123
-SELECT u.id, u.email, '$2y$10$nXMCByMwlNuY5eH6Ezm2SOqoCkAHY9eFkGKjsjkfYrP9HA22DrPVi', 1, NOW(), NOW()
+-- bcrypt by password: password123
+SELECT u.id, u.email, '$2a$10$uePseIx2QIGlV.pcz1lAe.GxUAdPurysqImPa9QO8D4.2I5WLLHNa', 1, NOW(), NOW()
 FROM `users` u
 WHERE u.email = 'admin@example.com'
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
@@ -82,8 +82,8 @@ INSERT INTO `users` (`name`, `email`, `age`, `created_at`, `updated_at`) VALUES
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
 
 INSERT INTO `auths` (`user_id`, `email`, `password_hash`, `is_active`, `created_at`, `updated_at`)
--- bcrypt by password: abc123
-SELECT u.id, u.email, '$2y$10$LmTs8hn1hiT0rDei0wbIUOPuYDndFv5UFzL0P6hglrOXuyF5LH8YG ', 1, NOW(), NOW()
+-- bcrypt by password: password123
+SELECT u.id, u.email, '$2a$10$uePseIx2QIGlV.pcz1lAe.GxUAdPurysqImPa9QO8D4.2I5WLLHNa', 1, NOW(), NOW()
 FROM `users` u
 WHERE u.email = 'user@example.com'
 ON DUPLICATE KEY UPDATE `updated_at` = NOW();
@@ -138,7 +138,7 @@ INSERT IGNORE INTO `users` (`name`, `email`, `age`, `created_at`, `updated_at`) 
 
 -- 管理者認証情報の確実な作成
 INSERT INTO `auths` (`user_id`, `email`, `password_hash`, `is_active`, `created_at`, `updated_at`)
-SELECT u.id, u.email, '$2y$10$nXMCByMwlNuY5eH6Ezm2SOqoCkAHY9eFkGKjsjkfYrP9HA22DrPVi', 1, NOW(), NOW()
+SELECT u.id, u.email, '$2a$10$uePseIx2QIGlV.pcz1lAe.GxUAdPurysqImPa9QO8D4.2I5WLLHNa', 1, NOW(), NOW()
 FROM `users` u
 WHERE u.email = 'admin@example.com'
 AND NOT EXISTS (SELECT 1 FROM `auths` a WHERE a.email = 'admin@example.com')
