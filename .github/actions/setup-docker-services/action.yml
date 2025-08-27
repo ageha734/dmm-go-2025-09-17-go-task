@@ -27,7 +27,7 @@ runs:
     - name: Build and start services
       shell: bash
       run: |
-        docker compose -f ${{ inputs.compose-file }} up -d --build mysql redis api nginx
+        docker compose -f ${{ inputs.compose-file }} up -d
 
     - name: Wait for services to be ready
       shell: bash
