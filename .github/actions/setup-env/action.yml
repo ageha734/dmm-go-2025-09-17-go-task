@@ -20,6 +20,9 @@ runs:
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         APP_PORT: ${{ vars.APP_PORT }}
         APP_ENV: ${{ vars.APP_ENV }}
+        AUTH_RATE_LIMIT: ${{ vars.AUTH_RATE_LIMIT }}
+        REGISTER_RATE_LIMIT: ${{ vars.REGISTER_RATE_LIMIT }}
+        LOGIN_RATE_LIMIT: ${{ vars.LOGIN_RATE_LIMIT }}
       run: |
         echo "SLACK_TOKEN=${SLACK_TOKEN}" > .env
         echo "DATABASE_HOST=${DATABASE_HOST}" >> .env
@@ -36,4 +39,7 @@ runs:
         echo "JWT_SECRET=${JWT_SECRET}" >> .env
         echo "APP_PORT=${APP_PORT}" >> .env
         echo "APP_ENV=${APP_ENV}" >> .env
+        echo "AUTH_RATE_LIMIT=${AUTH_RATE_LIMIT}" >> .env
+        echo "REGISTER_RATE_LIMIT=${REGISTER_RATE_LIMIT}" >> .env
+        echo "LOGIN_RATE_LIMIT=${LOGIN_RATE_LIMIT}" >> .env
         echo "✅ Created .env file with all environment variables"
