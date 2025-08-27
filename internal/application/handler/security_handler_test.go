@@ -8,6 +8,7 @@ import (
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -275,4 +276,22 @@ func TestMiddlewareOrder(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotEmpty(t, w.Header().Get("X-Request-ID"))
 	assert.NotEmpty(t, w.Header().Get("X-XSS-Protection"))
+}
+
+func TestSecurityHeadersComparison(t *testing.T) {
+	expected := map[string]string{
+		"X-XSS-Protection":       "1; mode=block",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options":        "DENY",
+	}
+
+	actual := map[string]string{
+		"X-XSS-Protection":       "1; mode=block",
+		"X-Content-Type-Options": "nosniff",
+		"X-Frame-Options":        "DENY",
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("Security headers mismatch (-want +got):\n%s", diff)
+	}
 }

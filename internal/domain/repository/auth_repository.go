@@ -38,6 +38,8 @@ type RoleRepository interface {
 	RemoveFromUser(ctx context.Context, userID, roleID uint) error
 
 	GetUserRoles(ctx context.Context, userID uint) ([]*entity.Role, error)
+
+	GetUserRoleNames(ctx context.Context, userID uint) ([]string, error)
 }
 
 type RefreshTokenRepository interface {

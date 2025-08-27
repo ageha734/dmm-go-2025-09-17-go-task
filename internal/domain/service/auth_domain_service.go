@@ -109,14 +109,9 @@ func (s *AuthDomainService) Login(ctx context.Context, email, password string) (
 		return nil, nil, fmt.Errorf("failed to update auth: %w", err)
 	}
 
-	roles, err := s.roleRepo.GetUserRoles(ctx, auth.UserID)
+	roleNames, err := s.roleRepo.GetUserRoleNames(ctx, auth.UserID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get user roles: %w", err)
-	}
-
-	roleNames := make([]string, len(roles))
-	for i, role := range roles {
-		roleNames[i] = role.Name
 	}
 
 	return auth, roleNames, nil

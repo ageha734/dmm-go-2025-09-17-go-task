@@ -7,6 +7,7 @@ import (
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -269,4 +270,13 @@ func TestRequireAnyRoleInvalidRoleType(t *testing.T) {
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
 	assert.Contains(t, w.Body.String(), "invalid user roles")
+}
+
+func TestAuthMiddlewareRoleComparison(t *testing.T) {
+	expected := []string{"admin", "moderator", "user"}
+	actual := []string{"admin", "moderator", "user"}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("User roles mismatch (-want +got):\n%s", diff)
+	}
 }

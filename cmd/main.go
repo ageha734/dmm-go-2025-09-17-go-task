@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
@@ -103,6 +104,7 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	router.Use(handler.CORSMiddleware())
 	router.Use(handler.SecurityHeadersMiddleware())
 	router.Use(handler.RequestIDMiddleware())
+	router.Use(middleware.ContentTypeMiddleware())
 
 	router.HandleMethodNotAllowed = true
 	router.NoMethod(func(c *gin.Context) {
@@ -119,9 +121,9 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	{
 		auth := v1.Group("/auth")
 		{
-			auth.Use(rateLimitMiddleware.RateLimitByIP(10, time.Minute))
-			auth.POST("/register", rateLimitMiddleware.RateLimitByIP(5, time.Minute), authHandler.Register)
-			auth.POST("/login", rateLimitMiddleware.RateLimitByIP(5, time.Minute), authHandler.Login)
+			auth.Use(rateLimitMiddleware.RateLimitByIP(getAuthRateLimit(), time.Minute))
+			auth.POST("/register", rateLimitMiddleware.RateLimitByIP(getRegisterRateLimit(), time.Minute), authHandler.Register)
+			auth.POST("/login", rateLimitMiddleware.RateLimitByIP(getLoginRateLimit(), time.Minute), authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 			auth.POST("/validate", authHandler.ValidateToken)
 		}
@@ -132,7 +134,7 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 			user.POST("/logout", authHandler.Logout)
 			user.POST("/change-password", authHandler.ChangePassword)
 			user.GET("/profile", userHandler.GetUserProfile)
-			user.PUT("/profile", authHandler.UpdateUserProfile)
+			user.PUT("/profile/:id", userHandler.UpdateUserProfile)
 			user.GET("/dashboard", authHandler.GetUserDashboard)
 			user.GET("/notifications", authHandler.GetUserNotifications)
 			user.PUT("/notifications/:id/read", authHandler.MarkNotificationRead)
@@ -241,4 +243,40 @@ func getRedisPassword() string {
 
 func getRedisDB() int {
 	return 0
+}
+
+func getAuthRateLimit() int64 {
+	limit := os.Getenv("AUTH_RATE_LIMIT")
+	if limit == "" {
+		return 100
+	}
+	val, err := strconv.ParseInt(limit, 10, 64)
+	if err != nil {
+		return 100
+	}
+	return val
+}
+
+func getRegisterRateLimit() int64 {
+	limit := os.Getenv("REGISTER_RATE_LIMIT")
+	if limit == "" {
+		return 50
+	}
+	val, err := strconv.ParseInt(limit, 10, 64)
+	if err != nil {
+		return 50
+	}
+	return val
+}
+
+func getLoginRateLimit() int64 {
+	limit := os.Getenv("LOGIN_RATE_LIMIT")
+	if limit == "" {
+		return 50
+	}
+	val, err := strconv.ParseInt(limit, 10, 64)
+	if err != nil {
+		return 50
+	}
+	return val
 }

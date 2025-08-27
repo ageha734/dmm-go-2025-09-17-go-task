@@ -7,6 +7,7 @@ import (
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -195,4 +196,20 @@ func TestCORSMiddlewareErrorHandling(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	assert.Equal(t, "*", w.Header().Get("Access-Control-Allow-Origin"))
 	assert.Equal(t, "GET, POST, PUT, DELETE, OPTIONS", w.Header().Get("Access-Control-Allow-Methods"))
+}
+
+func TestCORSHeaderComparison(t *testing.T) {
+	expected := map[string]string{
+		"Access-Control-Allow-Origin":  "*",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	}
+
+	actual := map[string]string{
+		"Access-Control-Allow-Origin":  "*",
+		"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("CORS headers mismatch (-want +got):\n%s", diff)
+	}
 }

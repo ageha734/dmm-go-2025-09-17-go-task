@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/repository"
@@ -139,6 +140,48 @@ func (r *roleRepository) GetUserRoles(ctx context.Context, userID uint) ([]*enti
 	}
 
 	return roles, nil
+}
+
+func (r *roleRepository) GetUserRoleNames(ctx context.Context, userID uint) ([]string, error) {
+	var roleNames []string
+	if err := r.db.WithContext(ctx).
+		Model(&GormRole{}).
+		Select("roles.name").
+		Joins("JOIN user_roles ON roles.id = user_roles.role_id").
+		Where("user_roles.user_id = ?", userID).
+		Pluck("name", &roleNames).Error; err != nil {
+		return nil, err
+	}
+
+	if len(roleNames) == 0 {
+		return nil, fmt.Errorf("user %d has no roles assigned and default roles do not exist", userID)
+	}
+
+	return roleNames, nil
+}
+
+func (r *roleRepository) AssignAdminRole(ctx context.Context, userID uint) error {
+	var adminRole GormRole
+	if err := r.db.WithContext(ctx).Where("name = ?", "admin").First(&adminRole).Error; err != nil {
+		return err
+	}
+
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&GormUserRole{}).
+		Where("user_id = ? AND role_id = ?", userID, adminRole.ID).
+		Count(&count).Error; err != nil {
+		return err
+	}
+
+	if count == 0 {
+		userRoleAssignment := &GormUserRole{
+			UserID: userID,
+			RoleID: adminRole.ID,
+		}
+		return r.db.WithContext(ctx).Create(userRoleAssignment).Error
+	}
+
+	return nil
 }
 
 type refreshTokenRepository struct {

@@ -93,6 +93,60 @@ func (h *UserHandler) GetUserProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": gin.H{"user_id": userInfo.ID}})
 }
 
+func (h *UserHandler) UpdateUserProfile(c *gin.Context) {
+	userIDStr := c.Param("id")
+	targetUserID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	requestUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	requestUserIDUint, ok := requestUserID.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	var req dto.UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	usecaseReq := usecase.UpdateUserRequest{
+		Name:  req.Name,
+		Email: req.Email,
+		Age:   req.Age,
+	}
+
+	user, err := h.userUsecase.UpdateUser(c.Request.Context(), uint(targetUserID), usecaseReq, requestUserIDUint, c.ClientIP(), c.GetHeader("User-Agent"))
+	if err != nil {
+		if err.Error() == "permission denied" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+			return
+		}
+		if err.Error() == "user with email "+req.Email+" already exists" {
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile"})
+		return
+	}
+
+	userInfo := dto.NewUserInfoFromEntity(user)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User profile updated successfully",
+		"data":    userInfo,
+	})
+}
+
 func (h *UserHandler) GetUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))

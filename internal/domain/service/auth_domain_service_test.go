@@ -171,6 +171,17 @@ func (m *MockRoleRepository) GetUserRoles(ctx context.Context, userID uint) ([]*
 	return nil, args.Error(1)
 }
 
+func (m *MockRoleRepository) GetUserRoleNames(ctx context.Context, userID uint) ([]string, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	if roleNames, ok := args.Get(0).([]string); ok {
+		return roleNames, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *MockRoleRepository) AssignToUser(ctx context.Context, userID, roleID uint) error {
 	args := m.Called(ctx, userID, roleID)
 	return args.Error(0)
@@ -345,11 +356,11 @@ func TestAuthDomainServiceLogin(t *testing.T) {
 			setupMock: func(authRepo *MockAuthRepository, roleRepo *MockRoleRepository) {
 				ctx := context.Background()
 				auth, _ := entity.NewAuth(1, "test@example.com", "password123")
-				roles := []*entity.Role{entity.NewRole("user", "Default user role")}
+				roleNames := []string{"user"}
 
 				authRepo.On("GetByEmail", ctx, "test@example.com").Return(auth, nil)
 				authRepo.On("Update", ctx, mock.AnythingOfType("*entity.Auth")).Return(nil)
-				roleRepo.On("GetUserRoles", ctx, uint(1)).Return(roles, nil)
+				roleRepo.On("GetUserRoleNames", ctx, uint(1)).Return(roleNames, nil)
 			},
 			wantErr: false,
 		},

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -192,5 +194,46 @@ func TestUserIsValidEmail(t *testing.T) {
 			got := tt.user.IsValidEmail()
 			assert.Equal(t, tt.want, got)
 		})
+	}
+}
+
+func TestUserStructComparison(t *testing.T) {
+	user1 := &entity.User{
+		ID:        1,
+		Name:      "テストユーザー",
+		Email:     "test@example.com",
+		Age:       25,
+		CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	user2 := &entity.User{
+		ID:        1,
+		Name:      "テストユーザー",
+		Email:     "test@example.com",
+		Age:       25,
+		CreatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC),
+	}
+
+	if diff := cmp.Diff(user1, user2); diff != "" {
+		t.Errorf("User mismatch (-want +got):\n%s", diff)
+	}
+
+	opts := cmp.Options{
+		cmpopts.IgnoreFields(entity.User{}, "CreatedAt", "UpdatedAt"),
+	}
+
+	user3 := &entity.User{
+		ID:        1,
+		Name:      "テストユーザー",
+		Email:     "test@example.com",
+		Age:       25,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if diff := cmp.Diff(user1, user3, opts); diff != "" {
+		t.Errorf("User mismatch (ignoring timestamps) (-want +got):\n%s", diff)
 	}
 }

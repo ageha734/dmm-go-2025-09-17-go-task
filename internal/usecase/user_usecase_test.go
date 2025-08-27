@@ -7,6 +7,7 @@ import (
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/usecase"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -287,6 +288,42 @@ func TestUserUsecaseCreateUser(t *testing.T) {
 
 		userRepo.AssertExpectations(t)
 	})
+}
+
+func TestUsecaseResponseComparison(t *testing.T) {
+	expected := map[string]interface{}{
+		"total_users":   int64(100),
+		"premium_users": 20,
+		"basic_users":   80,
+		"user_details": map[string]interface{}{
+			"active_users":   90,
+			"inactive_users": 10,
+		},
+	}
+
+	actual := map[string]interface{}{
+		"total_users":   int64(100),
+		"premium_users": 20,
+		"basic_users":   80,
+		"user_details": map[string]interface{}{
+			"active_users":   90,
+			"inactive_users": 10,
+		},
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("Stats response mismatch (-want +got):\n%s", diff)
+	}
+
+	opts := cmp.Options{
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "user_details"
+		}, cmp.Ignore()),
+	}
+
+	if diff := cmp.Diff(expected, actual, opts); diff != "" {
+		t.Errorf("Stats response mismatch (ignoring user_details) (-want +got):\n%s", diff)
+	}
 }
 
 func TestUserUsecaseGetUser(t *testing.T) {

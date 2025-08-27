@@ -13,6 +13,7 @@ import (
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/usecase"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -76,8 +77,8 @@ func (m *MockUserUsecase) GetUserProfile(ctx context.Context, userID uint) (*ent
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	if user, ok := args.Get(0).(*entity.User); ok {
-		return user, args.Error(1)
+	if userProfile, ok := args.Get(0).(*entity.User); ok {
+		return userProfile, args.Error(1)
 	}
 	return nil, args.Error(1)
 }
@@ -98,8 +99,8 @@ func (m *MockUserUsecase) GetFraudStats(ctx context.Context) (map[string]interfa
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	if stats, ok := args.Get(0).(map[string]interface{}); ok {
-		return stats, args.Error(1)
+	if fraudStats, ok := args.Get(0).(map[string]interface{}); ok {
+		return fraudStats, args.Error(1)
 	}
 	return nil, args.Error(1)
 }
@@ -167,4 +168,23 @@ func TestUserHandlerCreateUser(t *testing.T) {
 
 		mockUsecase.AssertExpectations(t)
 	})
+}
+
+// TestUserHandlerRequestComparison はgo-cmpを使用したリクエスト比較のテスト例
+func TestUserHandlerRequestComparison(t *testing.T) {
+	expected := dto.CreateUserRequest{
+		Name:  "テストユーザー",
+		Email: "test@example.com",
+		Age:   30,
+	}
+
+	actual := dto.CreateUserRequest{
+		Name:  "テストユーザー",
+		Email: "test@example.com",
+		Age:   30,
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("CreateUserRequest mismatch (-want +got):\n%s", diff)
+	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/service"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/usecase"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -126,7 +127,7 @@ func TestAuthHandlerRegister(t *testing.T) {
 				"age":      -1,
 			},
 			setupMock: func(mockUsecase *MockAuthUsecase) {
-				// 無効なリクエストのためモックの設定は不要
+				// invalid request body
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -153,6 +154,24 @@ func TestAuthHandlerRegister(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, w.Code)
 			mockUsecase.AssertExpectations(t)
 		})
+	}
+}
+
+func TestAuthHandlerResponseComparison(t *testing.T) {
+	expected := usecase.LoginResponse{
+		AccessToken:  "test-token",
+		RefreshToken: "test-refresh",
+		ExpiresIn:    3600,
+	}
+
+	actual := usecase.LoginResponse{
+		AccessToken:  "test-token",
+		RefreshToken: "test-refresh",
+		ExpiresIn:    3600,
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("LoginResponse mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -192,7 +211,7 @@ func TestAuthHandlerLogin(t *testing.T) {
 				"password": "123",
 			},
 			setupMock: func(mockUsecase *MockAuthUsecase) {
-				// 無効なリクエストのためモックの設定は不要
+				// invalid request body
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -255,7 +274,7 @@ func TestAuthHandlerRefreshToken(t *testing.T) {
 				"refresh_token": "",
 			},
 			setupMock: func(mockUsecase *MockAuthUsecase) {
-				// 無効なリクエストのためモックの設定は不要
+				// invalid request body
 			},
 			expectedStatus: http.StatusBadRequest,
 		},

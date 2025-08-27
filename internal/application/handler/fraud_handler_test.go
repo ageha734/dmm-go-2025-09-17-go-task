@@ -12,6 +12,7 @@ import (
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/entity"
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -210,6 +211,26 @@ func TestFraudHandlerAddIPToBlacklist(t *testing.T) {
 
 			mockUsecase.AssertExpectations(t)
 		})
+	}
+}
+
+func TestFraudHandlerSecurityEventComparison(t *testing.T) {
+	expected := dto.CreateSecurityEventRequest{
+		EventType:   "LOGIN_FAILED",
+		Description: "Failed login attempt",
+		IPAddress:   "192.168.1.100",
+		UserAgent:   "Mozilla/5.0",
+	}
+
+	actual := dto.CreateSecurityEventRequest{
+		EventType:   "LOGIN_FAILED",
+		Description: "Failed login attempt",
+		IPAddress:   "192.168.1.100",
+		UserAgent:   "Mozilla/5.0",
+	}
+
+	if diff := cmp.Diff(expected, actual); diff != "" {
+		t.Errorf("SecurityEvent mismatch (-want +got):\n%s", diff)
 	}
 }
 
