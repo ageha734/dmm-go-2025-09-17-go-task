@@ -71,7 +71,29 @@ func (m *MockUserUsecase) DeleteUser(ctx context.Context, userID uint, requestUs
 	return args.Error(0)
 }
 
+func (m *MockUserUsecase) GetUserProfile(ctx context.Context, userID uint) (*entity.User, error) {
+	args := m.Called(ctx, userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	if user, ok := args.Get(0).(*entity.User); ok {
+		return user, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *MockUserUsecase) GetUserStats(ctx context.Context) (map[string]interface{}, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	if stats, ok := args.Get(0).(map[string]interface{}); ok {
+		return stats, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *MockUserUsecase) GetFraudStats(ctx context.Context) (map[string]interface{}, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

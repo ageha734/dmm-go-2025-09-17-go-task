@@ -5,9 +5,12 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/handler"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/application/middleware"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/domain/service"
+	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/infrastructure/external"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/infrastructure/persistence"
 	"github.com/ageha734/dmm-go-2025-09-17-go-task/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -64,11 +67,19 @@ func main() {
 		userMembershipRepo,
 		fraudDomainService,
 	)
+	fraudUsecase := usecase.NewFraudUsecase(fraudDomainService)
+
+	redisClient := external.NewRedisClient("localhost:6379", "", 0)
+	cacheService := external.NewCacheService(redisClient)
+
+	authMiddleware := middleware.NewAuthMiddleware(authDomainService, cacheService)
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(cacheService)
 
 	authHandler := handler.NewAuthHandler(authUsecase)
 	userHandler := handler.NewUserHandler(userUsecase)
+	fraudHandler := handler.NewFraudHandler(fraudUsecase)
 
-	router := setupRouter(authHandler, userHandler)
+	router := setupRouter(authHandler, userHandler, fraudHandler, authMiddleware, rateLimitMiddleware)
 
 	port := getPort()
 	log.Printf("Starting server on port %s...", port)
@@ -87,8 +98,12 @@ func initDatabase() (*gorm.DB, error) {
 	return db, nil
 }
 
-func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler) *gin.Engine {
+func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHandler, fraudHandler *handler.FraudHandler, authMiddleware *middleware.AuthMiddleware, rateLimitMiddleware *middleware.RateLimitMiddleware) *gin.Engine {
 	router := gin.Default()
+
+	router.Use(handler.CORSMiddleware())
+	router.Use(handler.SecurityHeadersMiddleware())
+	router.Use(handler.RequestIDMiddleware())
 
 	router.HandleMethodNotAllowed = true
 	router.NoMethod(func(c *gin.Context) {
@@ -105,17 +120,26 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 	{
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
+			auth.Use(rateLimitMiddleware.RateLimitByIP(10, time.Minute))
+			auth.POST("/register", rateLimitMiddleware.RateLimitByIP(5, time.Minute), authHandler.Register)
+			auth.POST("/login", rateLimitMiddleware.RateLimitByIP(5, time.Minute), authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 			auth.POST("/validate", authHandler.ValidateToken)
 		}
 
-		authenticated := v1.Group("")
-		authenticated.Use(authMiddleware())
+		user := v1.Group("/user")
+		user.Use(authMiddleware.RequireAuth())
 		{
-			authenticated.POST("/auth/logout", authHandler.Logout)
-			authenticated.POST("/auth/change-password", authHandler.ChangePassword)
+			user.POST("/logout", authHandler.Logout)
+			user.POST("/change-password", authHandler.ChangePassword)
+			user.GET("/profile", userHandler.GetUserProfile)
+			user.PUT("/profile", authHandler.UpdateUserProfile)
+			user.GET("/dashboard", authHandler.GetUserDashboard)
+			user.GET("/notifications", authHandler.GetUserNotifications)
+			user.PUT("/notifications/:id/read", authHandler.MarkNotificationRead)
+			user.GET("/points/transactions", authHandler.GetUserPointTransactions)
+			user.POST("/preferences", authHandler.SetUserPreference)
+			user.GET("/preferences", authHandler.GetUserPreferences)
 		}
 
 		users := v1.Group("/users")
@@ -124,8 +148,45 @@ func setupRouter(authHandler *handler.AuthHandler, userHandler *handler.UserHand
 			users.POST("", userHandler.CreateUser)
 			users.GET("/:id", userHandler.GetUser)
 
-			users.PUT("/:id", authMiddleware(), userHandler.UpdateUser)
-			users.DELETE("/:id", authMiddleware(), userHandler.DeleteUser)
+			users.PUT("/:id", authMiddleware.RequireAuth(), userHandler.UpdateUser)
+			users.DELETE("/:id", authMiddleware.RequireAuth(), userHandler.DeleteUser)
+		}
+
+		admin := v1.Group("/admin")
+		admin.Use(authMiddleware.RequireAuth(), authMiddleware.RequireRole("admin"))
+		{
+			admin.GET("/health", userHandler.GetSystemHealth)
+			admin.GET("/users", userHandler.GetUsers)
+			admin.GET("/users/:user_id", userHandler.GetUserDetails)
+			admin.POST("/users/:user_id/points", userHandler.AddPointsToUser)
+			admin.POST("/users/:user_id/notifications", userHandler.CreateNotificationForUser)
+			admin.POST("/points/expire", userHandler.ExpireUserPoints)
+		}
+
+		fraud := v1.Group("/fraud")
+		fraud.Use(authMiddleware.RequireAuth(), authMiddleware.RequireRole("admin"))
+		{
+			fraud.POST("/blacklist/ip", fraudHandler.AddIPToBlacklist)
+			fraud.DELETE("/blacklist/ip/:ip", fraudHandler.RemoveIPFromBlacklist)
+			fraud.GET("/blacklist/ips", fraudHandler.GetBlacklistedIPs)
+
+			fraud.GET("/security/events", fraudHandler.GetSecurityEvents)
+			fraud.POST("/security/events", fraudHandler.CreateSecurityEvent)
+			fraud.POST("/security/blacklist", fraudHandler.AddIPToBlacklist)
+			fraud.DELETE("/security/blacklist/:ip", fraudHandler.RemoveIPFromBlacklist)
+
+			fraud.POST("/rate/limits", fraudHandler.CreateRateLimitRule)
+			fraud.PUT("/rate/limits/:id", fraudHandler.UpdateRateLimitRule)
+			fraud.DELETE("/rate/limits/:id", fraudHandler.DeleteRateLimitRule)
+			fraud.GET("/rate/limits", fraudHandler.GetRateLimitRules)
+
+			fraud.GET("/sessions", fraudHandler.GetActiveSessions)
+			fraud.DELETE("/sessions/:sessionId", fraudHandler.DeactivateSession)
+
+			fraud.GET("/devices", fraudHandler.GetDevices)
+			fraud.PUT("/devices/:fingerprint/trust", fraudHandler.TrustDevice)
+
+			fraud.POST("/cleanup", fraudHandler.CleanupExpiredData)
 		}
 
 		v1.GET("/stats", userHandler.GetUserStats)
@@ -167,6 +228,40 @@ func authMiddleware() gin.HandlerFunc {
 	}
 }
 
+func adminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roles, exists := c.Get("user_roles")
+		if !exists {
+			c.JSON(403, gin.H{"error": "Access denied"})
+			c.Abort()
+			return
+		}
+
+		roleSlice, ok := roles.([]string)
+		if !ok {
+			c.JSON(403, gin.H{"error": "Access denied"})
+			c.Abort()
+			return
+		}
+
+		hasAdminRole := false
+		for _, role := range roleSlice {
+			if role == "admin" {
+				hasAdminRole = true
+				break
+			}
+		}
+
+		if !hasAdminRole {
+			c.JSON(403, gin.H{"error": "Access denied"})
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func validateJWTToken(tokenString, jwtSecret string) (*JWTClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -195,7 +290,7 @@ type JWTClaims struct {
 func getDSN() string {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "user:password@tcp(localhost:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+		dsn = "testuser:password@tcp(localhost:3306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
 	}
 	return dsn
 }

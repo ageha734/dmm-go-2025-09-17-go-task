@@ -85,6 +85,14 @@ func (u *UserUsecase) GetUser(ctx context.Context, userID uint) (*entity.User, e
 	return user, nil
 }
 
+func (u *UserUsecase) GetUserProfile(ctx context.Context, userID uint) (*entity.User, error) {
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user profile: %w", err)
+	}
+	return user, nil
+}
+
 func (u *UserUsecase) GetUsers(ctx context.Context, page, limit int) (*UserListResponse, error) {
 	if page < 1 {
 		page = 1
@@ -183,6 +191,26 @@ func (u *UserUsecase) GetUserStats(ctx context.Context) (map[string]interface{},
 		for k, v := range membershipStats {
 			stats[k] = v
 		}
+	}
+
+	return stats, nil
+}
+
+func (u *UserUsecase) GetFraudStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{
+		"fraud_detection_enabled": true,
+		"total_security_events":   0,
+		"blocked_ips":             0,
+		"failed_login_attempts":   0,
+	}
+
+	fraudStats, err := u.fraudDomainService.GetFraudStats(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get fraud stats: %w", err)
+	}
+
+	for k, v := range fraudStats {
+		stats[k] = v
 	}
 
 	return stats, nil

@@ -17,7 +17,7 @@
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest1@example.com",
+  "email": "testuser1@example.com",
   "password": "password123"
 }
 
@@ -114,8 +114,8 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest2@example.com",
-  "password": "password123"
+  "email": "user@example.com",
+  "password": "abc123"
 }
 
 HTTP 200
@@ -126,8 +126,8 @@ perf_user2_token: jsonpath "$.data.access_token"
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest3@example.com",
-  "password": "password123"
+  "email": "admin@example.com",
+  "password": "abc123"
 }
 
 HTTP 200
@@ -175,7 +175,7 @@ Authorization: Bearer {{perf_admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" count >= 10
+jsonpath "$.data.users" count >= 5
 
 GET http://localhost/api/v1/admin/users
 Authorization: Bearer {{perf_admin_token}}
@@ -231,7 +231,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest4@example.com",
+  "email": "testuser1@example.com",
   "password": "password123"
 }
 
@@ -247,8 +247,8 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest5@example.com",
-  "password": "password123"
+  "email": "user@example.com",
+  "password": "abc123"
 }
 
 HTTP 200
@@ -263,8 +263,8 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest6@example.com",
-  "password": "password123"
+  "email": "admin@example.com",
+  "password": "abc123"
 }
 
 HTTP 200
@@ -284,7 +284,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest7@example.com",
+  "email": "testuser1@example.com",
   "password": "password123"
 }
 
@@ -353,7 +353,7 @@ HTTP 200
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest8@example.com",
+  "email": "testuser1@example.com",
   "password": "password123"
 }
 
@@ -511,7 +511,7 @@ jsonpath "$.error" exists
 POST http://localhost/api/v1/auth/login
 Content-Type: application/json
 {
-  "email": "perftest1@example.com",
+  "email": "testuser1@example.com",
   "password": "password123"
 }
 

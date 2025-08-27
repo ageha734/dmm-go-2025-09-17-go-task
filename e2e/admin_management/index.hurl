@@ -36,14 +36,14 @@ Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Captures]
-total_users: jsonpath "$.data" count
-first_user_id: jsonpath "$.data[0].id"
-first_user_email: jsonpath "$.data[0].email"
+total_users: jsonpath "$.data.users" count
+first_user_id: jsonpath "$.data.users[0].id"
+first_user_email: jsonpath "$.data.users[0].email"
 [Asserts]
-jsonpath "$.data" isCollection
-jsonpath "$.data" count >= 5
-jsonpath "$.data[0].id" exists
-jsonpath "$.data[0].email" exists
+jsonpath "$.data.users" isCollection
+jsonpath "$.data.users" count >= 5
+jsonpath "$.data.users[0].id" exists
+jsonpath "$.data.users[0].email" exists
 
 # Test 3: 一般ユーザーログイン（比較用）
 POST http://localhost/api/v1/auth/login
@@ -126,10 +126,10 @@ Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Captures]
-target_user_id: jsonpath "$.data[1].id"
-target_user_email: jsonpath "$.data[1].email"
+target_user_id: jsonpath "$.data.users[1].id"
+target_user_email: jsonpath "$.data.users[1].email"
 [Asserts]
-jsonpath "$.data[1]" exists
+jsonpath "$.data.users[1]" exists
 
 # Test 9: 管理者自身のプロファイル確認
 GET http://localhost/api/v1/user/profile
@@ -171,7 +171,7 @@ Authorization: Bearer {{new_admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" count >= 5
+jsonpath "$.data.users" count >= 5
 
 # Test 13: 無効なトークンでのアクセス試行
 GET http://localhost/api/v1/admin/users
@@ -238,7 +238,7 @@ Authorization: Bearer {{updated_admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" count >= 5
+jsonpath "$.data.users" count >= 5
 
 # ========================================
 # Phase 6: 同時セッション管理とセキュリティ
@@ -370,7 +370,7 @@ Authorization: Bearer {{final_admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" count >= 5
+jsonpath "$.data.users" count >= 5
 
 # Test 31: 最終クリーンアップ
 POST http://localhost/api/v1/user/logout

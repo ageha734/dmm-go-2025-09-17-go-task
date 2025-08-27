@@ -175,7 +175,7 @@ Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" count >= 10
+jsonpath "$.data.users" count >= 10
 
 # Test 43: 攻撃後の正常ユーザー機能確認
 GET http://localhost/api/v1/user/profile

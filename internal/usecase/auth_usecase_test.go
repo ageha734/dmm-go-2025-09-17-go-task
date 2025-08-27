@@ -119,6 +119,91 @@ func (m *MockFraudDomainService) DeactivateUserSession(ctx context.Context, sess
 	return args.Error(0)
 }
 
+func (m *MockFraudDomainService) GetFraudStats(ctx context.Context) (map[string]interface{}, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	if stats, ok := args.Get(0).(map[string]interface{}); ok {
+		return stats, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *MockFraudDomainService) AddIPToBlacklist(ctx context.Context, ip, reason, clientIP, userAgent string) error {
+	args := m.Called(ctx, ip, reason, clientIP, userAgent)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) RemoveIPFromBlacklist(ctx context.Context, ip, clientIP, userAgent string) error {
+	args := m.Called(ctx, ip, clientIP, userAgent)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) mockPaginatedResponse(methodName string, ctx context.Context, page, limit int) (interface{}, error) {
+	args := m.Called(ctx, page, limit)
+	return args.Get(0), args.Error(1)
+}
+
+func (m *MockFraudDomainService) mockSimpleResponse(methodName string, ctx context.Context) (interface{}, error) {
+	args := m.Called(ctx)
+	return args.Get(0), args.Error(1)
+}
+
+func (m *MockFraudDomainService) mockSessionOperation(methodName string, ctx context.Context, sessionID string) error {
+	args := m.Called(ctx, sessionID)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) GetBlacklistedIPs(ctx context.Context, page, limit int) (interface{}, error) {
+	return m.mockPaginatedResponse("GetBlacklistedIPs", ctx, page, limit)
+}
+
+func (m *MockFraudDomainService) GetSecurityEvents(ctx context.Context, page, limit int) (interface{}, error) {
+	return m.mockPaginatedResponse("GetSecurityEvents", ctx, page, limit)
+}
+
+func (m *MockFraudDomainService) CreateRateLimitRule(ctx context.Context, name, pattern string, maxRequests, windowSize int64) error {
+	args := m.Called(ctx, name, pattern, maxRequests, windowSize)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) UpdateRateLimitRule(ctx context.Context, id uint, name, pattern string, maxRequests, windowSize int64) error {
+	args := m.Called(ctx, id, name, pattern, maxRequests, windowSize)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) DeleteRateLimitRule(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) GetRateLimitRules(ctx context.Context) (interface{}, error) {
+	return m.mockSimpleResponse("GetRateLimitRules", ctx)
+}
+
+func (m *MockFraudDomainService) GetActiveSessions(ctx context.Context) (interface{}, error) {
+	return m.mockSimpleResponse("GetActiveSessions", ctx)
+}
+
+func (m *MockFraudDomainService) DeactivateSession(ctx context.Context, sessionID string) error {
+	return m.mockSessionOperation("DeactivateSession", ctx, sessionID)
+}
+
+func (m *MockFraudDomainService) GetDevices(ctx context.Context) (interface{}, error) {
+	return m.mockSimpleResponse("GetDevices", ctx)
+}
+
+func (m *MockFraudDomainService) TrustDevice(ctx context.Context, fingerprint string) error {
+	args := m.Called(ctx, fingerprint)
+	return args.Error(0)
+}
+
+func (m *MockFraudDomainService) CleanupExpiredData(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
+}
+
 func TestAuthUsecaseRegister(t *testing.T) {
 	tests := []struct {
 		name      string

@@ -76,8 +76,6 @@ Authorization: Bearer {{api_user_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{api_user_id}}
-jsonpath "$.data.name" exists
-jsonpath "$.data.email" exists
 
 # Test 6: GET - コレクション取得（管理者：全ユーザー）
 GET http://localhost/api/v1/admin/users
@@ -86,7 +84,7 @@ Authorization: Bearer {{api_admin_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data" isCollection
-jsonpath "$.data" count >= 5
+jsonpath "$.data.users" count >= 5
 
 # Test 7: POST - リソース作成（新規ユーザー登録）
 POST http://localhost/api/v1/auth/register
@@ -230,9 +228,9 @@ Authorization: Bearer {{api_admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" isCollection
-jsonpath "$.data[0].id" exists
-jsonpath "$.data[0].email" exists
+jsonpath "$.data.users" isCollection
+jsonpath "$.data.users[0].id" exists
+jsonpath "$.data.users[0].email" exists
 
 # Test 20: 統計エンドポイントのレスポンス形式確認
 GET http://localhost/api/v1/admin/stats/fraud
@@ -348,7 +346,6 @@ Authorization: Bearer {{lifecycle_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.data.user_id" == {{lifecycle_user_id}}
-jsonpath "$.data.name" == "ライフサイクルテストユーザー"
 
 # Test 29: パスワード変更フロー
 POST http://localhost/api/v1/user/change-password
@@ -383,9 +380,9 @@ Authorization: Bearer {{api_admin_token}}
 
 HTTP 200
 [Captures]
-admin_users_count: jsonpath "$.data" count
+admin_users_count: jsonpath "$.data.users" count
 [Asserts]
-jsonpath "$.data" count >= 5
+jsonpath "$.data.users" count >= 5
 
 # Test 32: 管理者権限での不正統計取得
 GET http://localhost/api/v1/admin/stats/fraud

@@ -129,8 +129,8 @@ Authorization: Bearer {{admin_token}}
 
 HTTP 200
 [Asserts]
-jsonpath "$.data" isCollection
-jsonpath "$.data" count >= 10
+jsonpath "$.data.users" isCollection
+jsonpath "$.data.users" count >= 10
 
 # Test 10: Regular User Accessing Admin Endpoint (Should Fail)
 GET http://localhost/api/v1/admin/users
