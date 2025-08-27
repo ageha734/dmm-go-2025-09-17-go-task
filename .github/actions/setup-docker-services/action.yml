@@ -1,10 +1,10 @@
-# .github/actions/setup-docker-services/action.yml
-
 name: 'Setup Docker Services'
 description: 'Build, cache, and start Docker services for E2E testing'
 
-# アクションの再利用性を高めるための入力パラメータ
 inputs:
+  github-token:
+    description: 'The GITHUB_TOKEN for authenticating with ghcr.io'
+    required: true
   compose-file:
     description: 'Path to the docker-compose file'
     required: false
@@ -22,7 +22,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.github-token }}
 
     - name: Build and start services
       shell: bash

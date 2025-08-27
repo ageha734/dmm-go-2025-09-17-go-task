@@ -75,6 +75,8 @@ jobs:
 
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
@@ -169,6 +171,8 @@ jobs:
 
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
@@ -225,6 +229,8 @@ jobs:
 
     - name: Setup Docker Services
       uses: ./.github/actions/setup-docker-services
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Start timer
       run: echo "START_TIME=$(date +%s)" >> $GITHUB_ENV
